@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Diagnostics;
 namespace LeToucan
 {
     class LeToucan
@@ -467,29 +468,34 @@ namespace LeToucan
             var IVMI = new List<string>();
             var Wieland = new List<string>();
             int lastWielandNum=0;
-            try
+            bool leave = false;
+            while (leave==false)
             {
-                using (var rd = new StreamReader("G:/LabX_Export/LabsQ_LabX_Integration/WielandID Database.csv"))
+                try
                 {
-                    while (!rd.EndOfStream)
+                    using (var rd = new StreamReader("G:/LabX_Export/LabsQ_LabX_Integration/WielandID Database.csv"))
                     {
-                        string theNextLine = rd.ReadLine();
-                        if (theNextLine == "") break;
-                        var splits = theNextLine.Split(',');
-                        IVMI.Add(splits[0]);
-                        Wieland.Add(splits[1]);
+                        while (!rd.EndOfStream)
+                        {
+                            string theNextLine = rd.ReadLine();
+                            if (theNextLine == "") break;
+                            var splits = theNextLine.Split(',');
+                            IVMI.Add(splits[0]);
+                            Wieland.Add(splits[1]);
+                        }
                     }
+                    leave = true;
+                }
+                catch
+                {
+                    Console.WriteLine("G:/LabX_Export/LabsQ_LabX_Integration/WielandID Database.csv");
+                    Console.WriteLine("in use or incorrectly formatted");
+                    Console.WriteLine("Press any key to try again or q to quit...\n");
+                    ConsoleKeyInfo keyStroke = Console.ReadKey(false);
+                    if (keyStroke.KeyChar == 'q')
+                        Environment.Exit(0);
                 }
             }
-            catch
-            {
-                Console.WriteLine("G:/LabX_Export/LabsQ_LabX_Integration/WielandID Database.csv");
-                Console.WriteLine("Program will now end");
-                Console.WriteLine("Press any key to continue...");
-                Console.ReadKey();
-                Environment.Exit(0);
-            }
-
             for (int i = 0; i < IVMI.Count; i++)
             {
                 if (string.Equals(IVMI[i], batchID)) return Wieland[i];
@@ -544,18 +550,46 @@ namespace LeToucan
             File.AppendAllText(RFIDLocation + batchID + "_rfid_complete.csv", finalExport);
 
             //export rfid to smaller sheet
+            ProcessStartInfo theDruck = new ProcessStartInfo();
+            theDruck.CreateNoWindow = true;
+            theDruck.UseShellExecute = false;
+            theDruck.WindowStyle = ProcessWindowStyle.Hidden;
             if(simultaneousPrints==1)
             {
                 File.WriteAllText(RFIDLocation + batchID + "_rfid_" + discnum + ".csv", RFIDHeader);
                 File.AppendAllText(RFIDLocation + batchID + "_rfid_" + discnum + ".csv", finalExport);
                 {
-                    //put in command to start rfid label printer
-                    if (material == "ZFC") //Zirlux
-                        System.Diagnostics.Process.Start("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \""+RFIDLocation + batchID + "_rfid_" + discnum + ".csv \"  /start /hidden");
-                    
-                    else  //Wieland
-                        System.Diagnostics.Process.Start("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv \"  /start /hidden");
-                    Console.ReadKey();
+                    try
+                    {
+                        
+                        //put in command to start rfid label printer
+                        if (material == "ZFC") //Zirlux
+                        {
+                            theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                            theDruck.Arguments = " /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                            Console.WriteLine("C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe" + " /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv \"  /start /hidden");
+                            //Console.ReadKey();
+                            
+                        }
+
+                        else  //Wieland
+                        {
+                            theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                            theDruck.Arguments = " /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                            Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv \"  /start /hidden");
+                            //Console.ReadKey();
+                        }
+                        using (Process exeProcess = Process.Start(theDruck))
+	                    {
+		                    exeProcess.WaitForExit();
+	                    }
+                        
+                    }
+                    catch
+                    {
+                        Console.WriteLine("Failed to find DruckerStation.exe");
+                        Environment.Exit(0);
+                    }
                 }
             }
             else
@@ -570,16 +604,35 @@ namespace LeToucan
                 File.AppendAllText(RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv", finalExport);
                 if ((discnum % simultaneousPrints == 0) || (discnum == batchSize))
                 {
-                    //put in command to start rfid label printer
-                    if (material == "ZFC") //Zirlux
+                    try
                     {
-
-                        Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv \"  /start /hidden");
-                        System.Diagnostics.Process.Start("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv \"  /start /hidden");
+                        if (material == "ZFC") //Zirlux
+                        {
+                            theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                            theDruck.Arguments = " /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv\"  /start /hidden";
+                            Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv \"  /start /hidden");
+                            //Console.ReadKey();
+                        }
+                        else  //Wieland
+                        {
+                            theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                            theDruck.Arguments = " /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv\"  /start /hidden";
+                            Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv \"  /start /hidden");
+                            //Console.ReadKey();
+                        }
+                        using (Process exeProcess = Process.Start(theDruck))
+	                    {
+		                    exeProcess.WaitForExit();
+	                    }
                     }
-                    else  //Wieland
-                        System.Diagnostics.Process.Start("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv \"  /start /hidden");
-                    Console.ReadKey();
+                    catch
+                    {
+                        Console.WriteLine("Failed to find DruckerStation.exe");
+                        Environment.Exit(0);
+                    }
+
+                    //put in command to start rfid label printer
+                    
                 }
             }
             return finalExport;
