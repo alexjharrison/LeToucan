@@ -5,22 +5,33 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Diagnostics;
+using System.Threading;
 namespace LeToucan
 {
     class LeToucan
     {
+        public static string thingOuttaSpec = ""; 
         static void Main(string[] args)
         {
             //fail program if incorrect # of inputs from pcdmis found
-            if (args.Length != 19)
+            if (args.Length != 20)
             {
-                Console.WriteLine(args.Length+" parameters detected, require 18\nProgram Failed");
+                Console.WriteLine(args.Length+" parameters detected, require 20\nProgram Failed");
                 foreach (string thisArg in args)
                     Console.WriteLine(thisArg);
                 Console.ReadKey(false);
                 Environment.Exit(0);
             }
 
+            /* Arg List
+             * 1.Disc Number    2.BatchID       3.OrderNum
+             * 4.Material Num   5.Theo Thick    6.MaterialCode
+             * 7.Shade          8.Theo Diam     9.ShadeAlias
+             * 10.Material Code 11.FS Density   12.Meas Diam
+             * 13.Meas Thick    14.Ledge Thick  15.Inner Diam
+             * 16.Ledge Offset  17.Concentricity18.Simultaneous Prints
+             * 19.End Program Bool Trigger      20.Print Toggler
+             */
 
             int simultaneousPrints=0; Boolean endProgram=false; double measDiam=0; double measThick=0;
             String shade=""; int matNum=0; double FSDensity=0; String shadeAlias=""; String batchID="";
@@ -29,6 +40,7 @@ namespace LeToucan
             string weightOperator=""; string propertyNum=""; double ledgeOffset=0; double concentricity=0;
             double PSDensity=0; double EF=0; double shrinkage=0;
             string line2 = ""; string[] line2split = { "", "" }; int batchsize = 0;
+            bool printToggle = true; string materialID="";
 
             try
             {
@@ -42,8 +54,9 @@ namespace LeToucan
             discnum = Convert.ToInt32(args[0]); 
             theoDiam = args[7]; theoThick = args[4];
             cmmOperator = Environment.UserName; material = args[5];
-            ledgeThick = Math.Round(Convert.ToDouble(args[13]),3); innerDiam = Math.Round(Convert.ToDouble(args[14]),3);
-            ledgeOffset = Math.Round(Convert.ToDouble(args[15]),3); concentricity = Math.Round(Convert.ToDouble(args[16]),3);
+            ledgeThick = Convert.ToDouble(args[13]); innerDiam = Convert.ToDouble(args[14]);
+            ledgeOffset = Convert.ToDouble(args[15]); concentricity = Convert.ToDouble(args[16]);
+            printToggle = Convert.ToBoolean(args[19]); materialID = args[3];
             
             //to be calculated
             }
@@ -286,7 +299,6 @@ namespace LeToucan
             
             File.Delete(weightlocation + "_tempcopy" + ".csv");
            
-            Console.WriteLine(scaleID + " " + weightOperator + " " + propertyNum + " " + cmmOperator);
 
             var finalColumn1 = new List<string>();
             var finalColumn2 = new List<string>();
@@ -350,6 +362,7 @@ namespace LeToucan
             PSDensity = CalcDensity(measDiam, measThick, weight, material);
             //Append data for this disc
             string nextLine = "";
+            bool retain;
             if (material=="ZTG"||material=="ZG")
             {
                 nextLine = (discnum + "," + weight + "," + measDiam + "," + measThick + "," + Math.Round(PSDensity,3)  + Environment.NewLine);
@@ -361,15 +374,17 @@ namespace LeToucan
                 shrinkage = CalcShrink(EF);
                 nextLine = (discnum + "," + weight + "," + measDiam + "," + measThick + "," + Math.Round(PSDensity,3) + "," + Math.Round(EF,4) + "," + Math.Round(shrinkage,3) + Environment.NewLine);
                 File.AppendAllText(weightlocation + "_appending" + ".csv", nextLine);
-                string finalExport = GenerateRFIDOutput(discnum,batchID,theoThick,matNum,material,theoDiam,EF,simultaneousPrints,batchsize,RFIDLocation,shade,shadeAlias,measDiam,rfidheader,shrinkage);
+                retain = SpecCheck(material, matNum, measDiam, measThick, PSDensity, innerDiam, ledgeThick,ledgeOffset, concentricity, EF, materialID);
+                string finalExport = GenerateRFIDOutput(discnum,batchID,theoThick,matNum,material,theoDiam,EF,simultaneousPrints,batchsize,RFIDLocation,shade,shadeAlias,measDiam,rfidheader,shrinkage,retain,printToggle);
             }
             else
             {
                 EF = CalcEF(FSDensity, PSDensity);
                 shrinkage = CalcShrink(EF);
-                nextLine = (discnum + "," + weight + "," + measDiam + "," + measThick + "," + Math.Round(PSDensity,3) + "," + Math.Round(EF,4) + "," + Math.Round(shrinkage,3)+","+innerDiam+","+ledgeThick+","+ledgeOffset+","+concentricity + Environment.NewLine);
+                nextLine = (discnum + "," + weight + "," + measDiam + "," + measThick + "," + Math.Round(PSDensity,3) + "," + Math.Round(EF,4) + "," + Math.Round(shrinkage,3)+","+Math.Round(innerDiam,2)+","+Math.Round(ledgeThick,2)+","+Math.Round(ledgeOffset,2)+","+Math.Round(concentricity,1) + Environment.NewLine);
                 File.AppendAllText(weightlocation + "_appending" + ".csv", nextLine);
-                string finalExport = GenerateRFIDOutput(discnum,batchID,theoThick,matNum,material,theoDiam,EF,simultaneousPrints,batchsize,RFIDLocation,shade,shadeAlias,measDiam,rfidheader,shrinkage);
+                retain = SpecCheck(material, matNum, measDiam, measThick, PSDensity, innerDiam, ledgeThick, ledgeOffset, concentricity, EF, materialID);
+                string finalExport = GenerateRFIDOutput(discnum,batchID,theoThick,matNum,material,theoDiam,EF,simultaneousPrints,batchsize,RFIDLocation,shade,shadeAlias,measDiam,rfidheader,shrinkage,retain,printToggle);
             }
         }
 
@@ -512,7 +527,7 @@ namespace LeToucan
             File.WriteAllText("G:/LabX_Export/LabsQ_LabX_Integration/WielandID Database.csv",csv.ToString());
             return Convert.ToString(lastWielandNum + 1);
         }
-        static String GenerateRFIDOutput(int discnum, string batchID, string theoThick, int matNum, string material, string theoDiam, double EF, int simultaneousPrints, int batchSize, string RFIDLocation, string shade, string shadeAlias,double measDiam, string RFIDHeader, double shrinkage)
+        static String GenerateRFIDOutput(int discnum, string batchID, string theoThick, int matNum, string material, string theoDiam, double EF, int simultaneousPrints, int batchSize, string RFIDLocation, string shade, string shadeAlias,double measDiam, string RFIDHeader, double shrinkage,bool retain, bool printToggle)
         {
 
             //generate rfid output csv
@@ -558,37 +573,58 @@ namespace LeToucan
             {
                 File.WriteAllText(RFIDLocation + batchID + "_rfid_" + discnum + ".csv", RFIDHeader);
                 File.AppendAllText(RFIDLocation + batchID + "_rfid_" + discnum + ".csv", finalExport);
+                
                 {
-                    try
+                    if (printToggle)
                     {
-                        
-                        //put in command to start rfid label printer
-                        if (material == "ZFC") //Zirlux
+                        try
                         {
-                            theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
-                            theDruck.Arguments = " /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                            Console.WriteLine("C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe" + " /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv \"  /start /hidden");
-                            //Console.ReadKey();
-                            
-                        }
+                            //put in command to start rfid label printer
+                            if (material == "ZFC") //Zirlux
+                            {
 
-                        else  //Wieland
-                        {
-                            theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
-                            theDruck.Arguments = " /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                            Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv \"  /start /hidden");
-                            //Console.ReadKey();
+                                theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                                if (retain)
+                                {
+                                    theDruck.Arguments = " /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring_Retain.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                    Console.WriteLine(thingOuttaSpec);
+                                    Console.WriteLine("Retain Label is Now Being Printed");
+                                }
+                                else
+                                {
+                                    theDruck.Arguments = " /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                    Console.WriteLine("C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe" + " /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv \"  /start /hidden");
+                                    Console.WriteLine("\n\nDisc is in spec\nLabel is printing");
+                                }
+                            }
+
+                            else  //Wieland
+                            {
+                                theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                                if (retain)
+                                {
+                                    theDruck.Arguments = " /P \"G:\\Topex_Printer\\Wieland Label Templates\\Wieland_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                    Console.WriteLine(thingOuttaSpec);
+                                    Console.WriteLine("Retain Label is Now Being Printed");
+                                }
+                                else
+                                {
+                                    theDruck.Arguments = " /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                    Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv \"  /start /hidden");
+                                    Console.WriteLine("\n\nDisc is in spec\nLabel is printing");
+                                }
+                            }
+                            using (Process exeProcess = Process.Start(theDruck))
+                            {
+                                exeProcess.WaitForExit();
+                            }
+
                         }
-                        using (Process exeProcess = Process.Start(theDruck))
-	                    {
-		                    exeProcess.WaitForExit();
-	                    }
-                        
-                    }
-                    catch
-                    {
-                        Console.WriteLine("Failed to find DruckerStation.exe");
-                        Environment.Exit(0);
+                        catch
+                        {
+                            Console.WriteLine("Failed to find DruckerStation.exe");
+                            Environment.Exit(0);
+                        }
                     }
                 }
             }
@@ -604,31 +640,40 @@ namespace LeToucan
                 File.AppendAllText(RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv", finalExport);
                 if ((discnum % simultaneousPrints == 0) || (discnum == batchSize))
                 {
-                    try
+                    if (printToggle)
                     {
-                        if (material == "ZFC") //Zirlux
+                        try
                         {
-                            theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
-                            theDruck.Arguments = " /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv\"  /start /hidden";
-                            Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv \"  /start /hidden");
-                            //Console.ReadKey();
+                            if (material == "ZFC") //Zirlux
+                            {
+                                theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                                if (retain)
+                                    theDruck.Arguments = " /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring_Retain.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv\"  /start /hidden";
+                                else
+                                    theDruck.Arguments = " /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv\"  /start /hidden";
+                                Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv \"  /start /hidden");
+                                //Console.ReadKey();
+                            }
+                            else  //Wieland
+                            {
+                                theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                                if (retain)
+                                    theDruck.Arguments = " /P \"G:\\Topex_Printer\\Wieland_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv\"  /start /hidden";
+                                else
+                                    theDruck.Arguments = " /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv\"  /start /hidden";
+                                Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv \"  /start /hidden");
+                                //Console.ReadKey();
+                            }
+                            using (Process exeProcess = Process.Start(theDruck))
+                            {
+                                exeProcess.WaitForExit();
+                            }
                         }
-                        else  //Wieland
+                        catch
                         {
-                            theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
-                            theDruck.Arguments = " /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv\"  /start /hidden";
-                            Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv \"  /start /hidden");
-                            //Console.ReadKey();
+                            Console.WriteLine("Failed to find DruckerStation.exe");
+                            Environment.Exit(0);
                         }
-                        using (Process exeProcess = Process.Start(theDruck))
-	                    {
-		                    exeProcess.WaitForExit();
-	                    }
-                    }
-                    catch
-                    {
-                        Console.WriteLine("Failed to find DruckerStation.exe");
-                        Environment.Exit(0);
                     }
 
                     //put in command to start rfid label printer
@@ -650,6 +695,141 @@ namespace LeToucan
                 }
             }
             return count;
+        }
+        
+        static bool SpecCheck(string material, int matNum, double measDiam, double measThick, double PSDensity, double innerDiam, double ledgeThick, double ledgeOffset, double concentricity, double EF, string materialID)
+        {
+            //checks to see if all the data for the disc is in spec
+            //returns location of template file to use 
+            //out of spec returns retain template in spec returns normal label
+            string specListLocation = "G:/LabX_Export/LabsQ_LabX_Integration/Spec_List.csv";
+            var column1 = new List<string>();
+            var column2 = new List<string>();
+            var column3 = new List<string>();
+            var column4 = new List<string>();
+            var column5 = new List<string>();
+            var column6 = new List<string>();
+            var column7 = new List<string>();
+            var column8 = new List<string>();
+            var column9 = new List<string>();
+            var column10 = new List<string>();
+            var column11 = new List<string>();
+            var column12 = new List<string>();
+            var column13 = new List<string>();
+            var column14 = new List<string>();
+            var column15 = new List<string>();
+            var column16 = new List<string>();
+            bool leave = false;
+            while (leave == false)
+            {
+                try
+                {
+                    using (var rd = new StreamReader(specListLocation))
+                    {
+                        while (!rd.EndOfStream)
+                        {
+                            string theNextLine = rd.ReadLine();
+                            if (theNextLine == "") break;
+                            var splits = theNextLine.Split(',');
+                            column1.Add(splits[0]);
+                            column2.Add(splits[1]);
+                            column3.Add(splits[2]);
+                            column4.Add(splits[3]);
+                            column5.Add(splits[4]);
+                            column6.Add(splits[5]);
+                            column7.Add(splits[6]);
+                            column8.Add(splits[7]);
+                            column9.Add(splits[8]);
+                            column10.Add(splits[9]);
+                            column11.Add(splits[10]);
+                            column12.Add(splits[11]);
+                            column13.Add(splits[12]);
+                            column14.Add(splits[13]);
+                            column15.Add(splits[14]);
+                            column16.Add(splits[15]);
+                        }
+                        leave = true;
+                    }
+                }
+                catch
+                {
+                    Console.WriteLine(specListLocation);
+                    Console.WriteLine("in use or incorrectly formatted");
+                    Console.WriteLine("Press any key to try again or q to quit...\n");
+                    ConsoleKeyInfo keyStroke = Console.ReadKey(false);
+                    if (keyStroke.KeyChar == 'q')
+                        Environment.Exit(0);
+                }
+            }
+            int rownum = 0;
+            for (int i = 0; i < column1.Count;i++)
+            {
+                if (column1[i] == materialID)
+                    rownum = i;
+            }
+            //check if thickness is in spec
+            if (Math.Round(measThick, Convert.ToInt32(column3[1])) < Math.Round(Convert.ToDouble(column3[rownum]),Convert.ToInt32(column3[1])) || Math.Round(measThick, Convert.ToInt32(column4[1])) > Math.Round(Convert.ToDouble(column4[rownum]),Convert.ToInt32(column4[1])))
+            {
+                thingOuttaSpec = "Thickness: " + Math.Round(measThick, Convert.ToInt32(column3[1])) + "\n Spec: " + Math.Round(Convert.ToDouble(column3[rownum]), Convert.ToInt32(column3[1])) + "-" + Math.Round(Convert.ToDouble(column4[rownum]), Convert.ToInt32(column4[1]));
+                return true;
+            }
+            //check if diameter is in spec
+            if (Math.Round(measDiam, Convert.ToInt32(column5[1])) < Math.Round(Convert.ToDouble(column5[rownum]), Convert.ToInt32(column5[1])) || Math.Round(measDiam, Convert.ToInt32(column6[1])) > Math.Round(Convert.ToDouble(column6[rownum]), Convert.ToInt32(column6[1])))
+            {
+                thingOuttaSpec = "Diameter: " + Math.Round(measDiam, Convert.ToInt32(column5[1])) + "\n Spec: " + Math.Round(Convert.ToDouble(column5[rownum]), Convert.ToInt32(column5[1])) + "-" + Math.Round(Convert.ToDouble(column6[rownum]), Convert.ToInt32(column6[1]));
+                return true;
+            }
+
+            if (material != "ZFC")
+            {
+                //check if density is in spec
+                if (Math.Round(PSDensity, Convert.ToInt32(column7[1])) < Math.Round(Convert.ToDouble(column7[rownum]), Convert.ToInt32(column7[1])) || Math.Round(PSDensity, Convert.ToInt32(column8[1])) > Math.Round(Convert.ToDouble(column8[rownum]), Convert.ToInt32(column8[1])))
+                {
+                    thingOuttaSpec = "Pre-Sintered Density: " + Math.Round(PSDensity, Convert.ToInt32(column7[1])) + "\n Spec: " + Math.Round(Convert.ToDouble(column7[rownum]), Convert.ToInt32(column7[1])) + "-" + Math.Round(Convert.ToDouble(column8[rownum]), Convert.ToInt32(column8[1]));
+                    return true;
+                }
+                    
+                //only check ledge stuff on non-green wieland discs
+                if(material=="ZT"||material=="ZTR"||material=="ZMO")
+                {
+                    //Inner Diameter spec
+                    if (Math.Round(innerDiam, Convert.ToInt32(column11[1])) < Math.Round(Convert.ToDouble(column11[rownum]), Convert.ToInt32(column11[1])) || Math.Round(innerDiam, Convert.ToInt32(column12[1])) > Math.Round(Convert.ToDouble(column12[rownum]), Convert.ToInt32(column12[1])))
+                    {
+                        thingOuttaSpec = "Inner Diameter: " + Math.Round(innerDiam, Convert.ToInt32(column11[1])) + "\n Spec: " + Math.Round(Convert.ToDouble(column11[rownum]), Convert.ToInt32(column11[1])) + "-" + Math.Round(Convert.ToDouble(column12[rownum]), Convert.ToInt32(column12[1])) ;
+                        return true;
+                    }
+                    //Ledge Thickness spec
+                    if (Math.Round(ledgeThick, Convert.ToInt32(column13[1])) < Math.Round(Convert.ToDouble(column13[rownum]), Convert.ToInt32(column13[1])) || Math.Round(ledgeThick, Convert.ToInt32(column14[1])) > Math.Round(Convert.ToDouble(column14[rownum]), Convert.ToInt32(column14[1])))
+                    {
+                        thingOuttaSpec = "Ledge Thickness: " + Math.Round(ledgeThick, Convert.ToInt32(column13[1])) + "\n Spec: " + Math.Round(Convert.ToDouble(column13[rownum]), Convert.ToInt32(column13[1])) + "-" + Math.Round(Convert.ToDouble(column14[rownum]), Convert.ToInt32(column14[1]));
+                        return true;
+                    }
+                    //Center Offset Max
+                    if (Math.Round(concentricity, Convert.ToInt32(column15[1])) > Math.Round(Convert.ToDouble(column15[rownum]), Convert.ToInt32(column15[1])))
+                    {
+                        thingOuttaSpec = "Concentricity: " + Math.Round(concentricity, Convert.ToInt32(column15[1])) + "\n Spec: <" + Math.Round(Convert.ToDouble(column15[rownum]), Convert.ToInt32(column15[1]));
+                        return true;
+                    }
+                    //Vertical Offset Max
+                    if (Math.Round(ledgeOffset, Convert.ToInt32(column16[1])) > Math.Round(Convert.ToDouble(column16[rownum]), Convert.ToInt32(column16[1])))
+                    {
+                        thingOuttaSpec = "Ledge Offset: " + Math.Round(ledgeOffset, Convert.ToInt32(column16[1])) + "\n Spec: <" + Math.Round(Convert.ToDouble(column16[rownum]), Convert.ToInt32(column16[1]));
+                        return true;
+                    }
+
+                }
+            }
+            //check for EF in zirlux discs
+            else
+                if (Math.Round(EF, Convert.ToInt32(column9[1])) < Math.Round(Convert.ToDouble(column9[rownum]), Convert.ToInt32(column10[1])) || Math.Round(EF, Convert.ToInt32(column10[1])) > Math.Round(Convert.ToDouble(column7[rownum]), Convert.ToInt32(column7[1])))
+                {
+                    thingOuttaSpec = "EF: " + Math.Round(EF, Convert.ToInt32(column9[1])) + "\n Spec: " + Math.Round(Convert.ToDouble(column9[rownum]), Convert.ToInt32(column9[1])) + "-" + Math.Round(Convert.ToDouble(column10[rownum]), Convert.ToInt32(column10[1]));
+                    return true;
+                }
+
+
+            //nothing was out of spec
+            return false;
         }
     }
 }
