@@ -821,7 +821,7 @@ namespace LeToucan
             }
             //check for EF in zirlux discs
             else
-                if (Math.Round(EF, Convert.ToInt32(column9[1])) < Math.Round(Convert.ToDouble(column9[rownum]), Convert.ToInt32(column10[1])) || Math.Round(EF, Convert.ToInt32(column10[1])) > Math.Round(Convert.ToDouble(column7[rownum]), Convert.ToInt32(column7[1])))
+                if (Math.Round(EF, Convert.ToInt32(column9[1])) < Math.Round(Convert.ToDouble(column9[rownum]), Convert.ToInt32(column9[1])) || Math.Round(EF, Convert.ToInt32(column10[1])) > Math.Round(Convert.ToDouble(column10[rownum]), Convert.ToInt32(column10[1])))
                 {
                     thingOuttaSpec = "EF: " + Math.Round(EF, Convert.ToInt32(column9[1])) + "\n Spec: " + Math.Round(Convert.ToDouble(column9[rownum]), Convert.ToInt32(column9[1])) + "-" + Math.Round(Convert.ToDouble(column10[rownum]), Convert.ToInt32(column10[1]));
                     return true;
