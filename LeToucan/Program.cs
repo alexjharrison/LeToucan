@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Diagnostics;
 using System.Threading;
+using System.Runtime.InteropServices;
 namespace LeToucan
 {
     class LeToucan
@@ -170,9 +171,6 @@ namespace LeToucan
                     Environment.Exit(0);
                 }
 
-
-                
-                
                 Environment.Exit(0);
             }
             
@@ -386,6 +384,13 @@ namespace LeToucan
                 retain = SpecCheck(material, matNum, measDiam, measThick, PSDensity, innerDiam, ledgeThick, ledgeOffset, concentricity, EF, materialID);
                 string finalExport = GenerateRFIDOutput(discnum,batchID,theoThick,matNum,material,theoDiam,EF,simultaneousPrints,batchsize,RFIDLocation,shade,shadeAlias,measDiam,rfidheader,shrinkage,retain,printToggle);
             }
+            
+            string labelTemplate = @"G:\Equipment\GiS-Topex RFID Printer\Datamax Template Files\";
+            
+            if (discnum == 1 || discnum==batchsize)
+                PrintBoxLabels(discnum, theoThick, matNum, batchID, material, materialID, batchsize,labelTemplate, 2, shade);
+            else
+                PrintBoxLabels(discnum, theoThick, matNum, batchID, material, materialID, batchsize, labelTemplate, 1, shade);
         }
 
 
@@ -616,7 +621,7 @@ namespace LeToucan
                             }
                             using (Process exeProcess = Process.Start(theDruck))
                             {
-                                exeProcess.WaitForExit();
+                                exeProcess.WaitForExit(10);
                             }
 
                         }
@@ -831,5 +836,85 @@ namespace LeToucan
             //nothing was out of spec
             return false;
         }
+        static void PrintBoxLabels(int discnum,string theoThick,int matNum,string batchID,string material,string materialID,int batchsize,string templateLocation,int numLabels, string shade)
+        {
+            var cmdFile = new StringBuilder();
+            var cmdFile2 = new StringBuilder();
+            
+            cmdFile.AppendLine("LABELNAME = \""+templateLocation+"Zenostar Box Label Template.lab\"");
+            cmdFile.AppendLine("PRINTER= \"Copy of Datamax-O'Neil I-4606e Mark II,USB004\"");
+            cmdFile.AppendLine("Thickness = \"" + theoThick + "\"");
+            cmdFile.AppendLine("Material Number = \"" + materialID + "\"");
+            cmdFile.AppendLine("Lot Number = \""+batchID+"\"");
+            cmdFile.AppendLine("Material Description = \"" + shade + "\"");
+            cmdFile.AppendLine("LABELQUANTITY = \""+numLabels+"\"");
+            File.WriteAllText(templateLocation+"Label Output\\Box Output_"+discnum+".cmd",cmdFile.ToString());
+
+            cmdFile2.AppendLine("LABELNAME = \"" + templateLocation + "Zenostar Barcode Label Template.lab\"");
+            cmdFile2.AppendLine("PRINTER = \"Datamax-O'Neil I-4606e Mark II,USB003\"");
+            cmdFile2.AppendLine("Material Number = \"" + materialID + "\"");
+            cmdFile2.AppendLine("Lot Number = \"" + batchID + "\"");
+            cmdFile2.AppendLine("Piece Count = \"1 pc.\"");
+            cmdFile2.AppendLine("Barcode Label Identifier = \"" + materialID + "\"");
+            cmdFile.AppendLine("LABELQUANTITY = \"" + numLabels + "\"");
+            File.WriteAllText(templateLocation + "Label Output\\Barcode Output_"+discnum+".cmd", cmdFile2.ToString());
+            
+            try
+            {
+                if (discnum == 1) 
+                {
+                    File.WriteAllText("G:/Equipment/GiS-Topex RFID Printer/Generated RFID Files/" + shade + "/" + batchID + "/Box Output_" + batchID + ".cmd", cmdFile.ToString());
+                    File.WriteAllText("G:/Equipment/GiS-Topex RFID Printer/Generated RFID Files/" + shade + "/" + batchID + "/Barcode Output_" + batchID + ".cmd", cmdFile2.ToString());
+
+                    ProcessStartInfo csStart = new ProcessStartInfo();
+                    csStart.CreateNoWindow = true;
+                    csStart.UseShellExecute = false;
+                    csStart.WindowStyle = ProcessWindowStyle.Hidden;
+                    csStart.FileName = @"C:\Program Files (x86)\Teklynx\CODESOFT 2014\CS.exe";
+                    csStart.Arguments = " /CMD " + templateLocation + "Label Output";
+
+                    using (Process exeProcess = Process.Start(csStart))
+                        exeProcess.WaitForExit(10000);
+                }
+            }
+            catch
+            {
+                Console.WriteLine("Opening CS.exe Failed");
+            }
+
+            int hWnd;
+            Process[] processRunning = Process.GetProcesses();
+            foreach (Process pr in processRunning)
+            {
+                if (pr.ProcessName == "CS")
+                {
+                    hWnd = pr.MainWindowHandle.ToInt32();
+                    ShowWindow(hWnd, 6);
+                }
+                if (pr.ProcessName == "Lppa")
+                {
+                    hWnd = pr.MainWindowHandle.ToInt32();
+                    ShowWindow(hWnd, 6);  //6 is the number to minimize
+                }
+            }
+
+            if(discnum==batchsize)
+            {
+                Console.WriteLine("\n\nClosing Label Printing Software...");
+                Thread.Sleep(15000);
+
+                foreach (var process in Process.GetProcessesByName("Lppa"))
+                    process.Kill();
+
+                foreach (var process in Process.GetProcessesByName("CS"))
+                    process.Kill();
+            }
+        }
+
+        [DllImport("User32")]
+        private static extern int ShowWindow(int hwnd, int nCmdShow);
+        
+
     }
+
 }
