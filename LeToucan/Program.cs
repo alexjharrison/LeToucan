@@ -15,9 +15,9 @@ namespace LeToucan
         static void Main(string[] args)
         {
             //fail program if incorrect # of inputs from pcdmis found
-            if (args.Length != 20)
+            if (args.Length != 21)
             {
-                Console.WriteLine(args.Length+" parameters detected, require 20\nProgram Failed");
+                Console.WriteLine(args.Length+" parameters detected, require 21\nProgram Failed");
                 foreach (string thisArg in args)
                     Console.WriteLine(thisArg);
                 Console.ReadKey(false);
@@ -32,6 +32,7 @@ namespace LeToucan
              * 13.Meas Thick    14.Ledge Thick  15.Inner Diam
              * 16.Ledge Offset  17.Concentricity18.Simultaneous Prints
              * 19.End Program Bool Trigger      20.Print Toggler
+             * 21. Full Description for Label
              */
 
             int simultaneousPrints=0; Boolean endProgram=false; double measDiam=0; double measThick=0;
@@ -41,23 +42,24 @@ namespace LeToucan
             string weightOperator=""; string propertyNum=""; double ledgeOffset=0; double concentricity=0;
             double PSDensity=0; double EF=0; double shrinkage=0;
             string line2 = ""; string[] line2split = { "", "" }; int batchsize = 0;
-            bool printToggle = true; string materialID="";
+            bool printToggle = true; string materialID = ""; string fullMaterialID = "";
 
             try
             {
             //assign args into variables and declare more
-            simultaneousPrints = Convert.ToInt32(args[17]); //this is how after how many discs labels are printed
-            endProgram = Convert.ToBoolean(args[18]);
-            measDiam = Convert.ToDouble(args[11]); measThick = Convert.ToDouble(args[12]); 
-            shade = args[6]; matNum = Convert.ToInt32(args[9]); 
-            FSDensity = Convert.ToDouble(args[10]); shadeAlias = args[8];
-            batchID = args[1]; orderNum = args[2]; 
-            discnum = Convert.ToInt32(args[0]); 
-            theoDiam = args[7]; theoThick = args[4];
-            cmmOperator = Environment.UserName; material = args[5];
-            ledgeThick = Convert.ToDouble(args[13]); innerDiam = Convert.ToDouble(args[14]);
-            ledgeOffset = Convert.ToDouble(args[15]); concentricity = Convert.ToDouble(args[16]);
-            printToggle = Convert.ToBoolean(args[19]); materialID = args[3];
+                simultaneousPrints = Convert.ToInt32(args[17]); //this is how after how many discs labels are printed
+                endProgram = Convert.ToBoolean(args[18]);
+                measDiam = Convert.ToDouble(args[11]); measThick = Convert.ToDouble(args[12]); 
+                shade = args[6]; matNum = Convert.ToInt32(args[9]); 
+                FSDensity = Convert.ToDouble(args[10]); shadeAlias = args[8];
+                batchID = args[1]; orderNum = args[2]; 
+                discnum = Convert.ToInt32(args[0]); 
+                theoDiam = args[7]; theoThick = args[4];
+                cmmOperator = Environment.UserName; material = args[5];
+                ledgeThick = Convert.ToDouble(args[13]); innerDiam = Convert.ToDouble(args[14]);
+                ledgeOffset = Convert.ToDouble(args[15]); concentricity = Convert.ToDouble(args[16]);
+                printToggle = Convert.ToBoolean(args[19]); materialID = args[3];
+                fullMaterialID = args[20];
             
             //to be calculated
             }
@@ -357,7 +359,7 @@ namespace LeToucan
                 File.WriteAllText(weightlocation + "_appending.csv", csv.ToString());
             }
 
-            PSDensity = CalcDensity(measDiam, measThick, weight, material);
+            PSDensity = CalcDensity(measDiam, measThick, weight, material,innerDiam,ledgeThick);
             //Append data for this disc
             string nextLine = "";
             bool retain;
@@ -387,10 +389,16 @@ namespace LeToucan
             
             string labelTemplate = @"G:\Equipment\GiS-Topex RFID Printer\Datamax Template Files\";
             
-            if (discnum == 1 || discnum==batchsize)
-                PrintBoxLabels(discnum, theoThick, matNum, batchID, material, materialID, batchsize,labelTemplate, 2, shade);
-            else
-                PrintBoxLabels(discnum, theoThick, matNum, batchID, material, materialID, batchsize, labelTemplate, 1, shade);
+            if(printToggle)
+            {
+                if (material == "ZFC" || material == "ZMO" || material == "ZTR" || material == "ZT")
+                {
+                    if (discnum == 1 || discnum == batchsize)
+                        PrintBoxLabels(discnum, theoThick, matNum, batchID, material, materialID, batchsize, labelTemplate, 2, shade, fullMaterialID);
+                    else
+                        PrintBoxLabels(discnum, theoThick, matNum, batchID, material, materialID, batchsize, labelTemplate, 1, shade, fullMaterialID);
+                }
+            }
         }
 
 
@@ -420,17 +428,26 @@ namespace LeToucan
             }
             return result;
         }
-        static double CalcDensity(double diam, double thick, double weight, String material)
+        static double CalcDensity(double diam, double thick, double weight, String material, double innerDiam, double ledgeThick )
         {
             double density = 0;
             if (material == "ZFC")  //Zirlux LGS723a
                 density = weight / ((Math.Pow(0.5 * diam, 2.0) * Math.PI) * (thick / 1000));
             else if (material == "ZTR")  //Wieland Translucent Light, Medium... LGS723b
-                density = (weight * 1000) / (Math.PI * Math.Pow(diam / 2, 2.0) * thick - (41.878 * 2 / 100.2 * diam));
+            {
+                //density = (weight * 1000) / (Math.PI * Math.Pow(diam / 2, 2.0) * thick - (41.878 * 2 / 100.2 * diam));  Without Ledge Equation
+                density = (weight * 1000) / ((Math.PI * Math.Pow(innerDiam, 2) * thick / 4) + (Math.PI * ledgeThick * (Math.Pow(diam, 2) - Math.Pow(innerDiam, 2)) / 4));
+            }
             else if (material == "ZMO")  //Wieland MO LGS723d
-                density = (weight * 1000) / (Math.PI * Math.Pow((diam / 2), 2.0) * thick - (0.4 * Math.PI * diam));
+            {
+                //density = (weight * 1000) / (Math.PI * Math.Pow((diam / 2), 2.0) * thick - (0.4 * Math.PI * diam));     Without Ledge Equation
+                density = (weight * 1000 * .9975) / ((Math.PI * Math.Pow(innerDiam, 2) * thick / 4) + (Math.PI * ledgeThick * (Math.Pow(diam, 2) - Math.Pow(innerDiam, 2)) / 4));
+            }
             else if (material == "ZT")  //Wieland T0,T1...  LGS723e
-                density = weight * 0.9955 / ((Math.PI * Math.Pow(diam, 2.0) * thick / 4 / 1000 - 2 * 2 * Math.PI * (diam / 2 / 1000) * (0.27 / 2)));
+            {
+                //density = weight * 0.9955 / ((Math.PI * Math.Pow(diam, 2.0) * thick / 4 / 1000 - 2 * 2 * Math.PI * (diam / 2 / 1000) * (0.27 / 2)));  Without Ledge Equation
+                density = (weight * 1000 * .9955) / ((Math.PI * Math.Pow(innerDiam, 2) * thick / 4) + (Math.PI * ledgeThick * (Math.Pow(diam, 2) - Math.Pow(innerDiam, 2)) / 4));
+            }
             else if (material == "ZTG")  //Wieland Green Light, Medium... LGS723c
                 density = (weight*1000)/((Math.PI*(Math.Pow((diam/2),2.0)*thick)-(41.878*2/100.2*diam)));
             else if (material == "ZG")  //Wieland Green T0,T1,T2... LGS723f
@@ -563,7 +580,7 @@ namespace LeToucan
             
             //export rfid to ..._complete.csv 
             if(material=="ZFC")
-                finalExport = String.Concat(Environment.NewLine, discID, "\t", efDigits, "\t", theoDiam, "\t", theoThick, "\t", matNum, "\t", barcodeNutzdaten, "\t", WielandID, "\t", stringNum, "\t\t", batchID, "\t", Math.Round(shrinkage, 3), "\tH\t\t", batchID, "\t\t4418753237\t", barcode, "\t", encodedCode, "\t", shadeAlias, "\t"+shadeAlias2+"\t");
+                finalExport = String.Concat(Environment.NewLine, discID, "\t", efDigits, "\t", "98.5", "\t", theoThick, "\t", matNum, "\t", barcodeNutzdaten, "\t", WielandID, "\t", stringNum, "\t\t", batchID, "\t", Math.Round(shrinkage, 3), "\tH\t\t", batchID, "\t\t4418753237\t", barcode, "\t", encodedCode, "\t", shadeAlias, "\t"+shadeAlias2+"\t");
             else 
                 finalExport = String.Concat(Environment.NewLine, discID, "\t", efDigits, "\t", heightAlias, "\t", theoThick, ".00\t", matNum, "\t", barcodeNutzdaten, "\t", batchID, "\t", stringNum, "\t\t", batchID, "\t", Math.Round(measDiam, 2), "\tH\t\t", batchID, "\t\t4418753237\t", barcode, "\t", encodedCode, "\t", shadeAlias, "\t\t");
 
@@ -621,7 +638,14 @@ namespace LeToucan
                             }
                             using (Process exeProcess = Process.Start(theDruck))
                             {
-                                exeProcess.WaitForExit(10);
+                                exeProcess.WaitForExit(20000);
+                            }
+                            if(discnum==1||discnum==batchSize)
+                            {
+                                using (Process exeProcess = Process.Start(theDruck))
+                                {
+                                    exeProcess.WaitForExit(10);
+                                }
                             }
 
                         }
@@ -672,6 +696,13 @@ namespace LeToucan
                             using (Process exeProcess = Process.Start(theDruck))
                             {
                                 exeProcess.WaitForExit();
+                            }
+                            if (discnum == 1 || discnum == batchSize)
+                            {
+                                using (Process exeProcess = Process.Start(theDruck))
+                                {
+                                    exeProcess.WaitForExit(10);
+                                }
                             }
                         }
                         catch
@@ -836,35 +867,56 @@ namespace LeToucan
             //nothing was out of spec
             return false;
         }
-        static void PrintBoxLabels(int discnum,string theoThick,int matNum,string batchID,string material,string materialID,int batchsize,string templateLocation,int numLabels, string shade)
+        static void PrintBoxLabels(int discnum,string theoThick,int matNum,string batchID,string material,string materialID,int batchsize,string templateLocation,int numLabels, string shade, string fullMaterialID)
         {
             var cmdFile = new StringBuilder();
             var cmdFile2 = new StringBuilder();
+
+            string shadeCopy = shade;
+            if (Char.IsDigit(shade[1])) shade = shade.Insert(1, " ");
+            else if (Char.IsDigit(shade[2])) shade = shade.Insert(2, " ");
+            if (shade == "Sun-Chroma") shade = shade.Replace("-", " ");
+            if (material == "ZTR"||shade=="Sun"||shade=="Sun Chroma") shade = shade.ToLower();
             
-            cmdFile.AppendLine("LABELNAME = \""+templateLocation+"Zenostar Box Label Template.lab\"");
+            if(material=="ZMO"||material=="ZT")
+                cmdFile.AppendLine("LABELNAME = \"" + templateLocation + "Zenostar Box Label Template.lab\"");
+            else if(material=="ZTR")
+                cmdFile.AppendLine("LABELNAME = \"" + templateLocation + "Zenostar Trans Box Label Template.lab\"");
+            else 
+                cmdFile.AppendLine("LABELNAME = \"" + templateLocation + "Zirlux Box Label Template.lab\"");
+
             cmdFile.AppendLine("PRINTER= \"Copy of Datamax-O'Neil I-4606e Mark II,USB004\"");
             cmdFile.AppendLine("Thickness = \"" + theoThick + "\"");
             cmdFile.AppendLine("Material Number = \"" + materialID + "\"");
-            cmdFile.AppendLine("Lot Number = \""+batchID+"\"");
-            cmdFile.AppendLine("Material Description = \"" + shade + "\"");
-            cmdFile.AppendLine("LABELQUANTITY = \""+numLabels+"\"");
+            cmdFile.AppendLine("Lot Number = \"" + batchID + "\"");
+
+            if (material != "ZFC") 
+                cmdFile.AppendLine("Material Description = \"" + shade + "\"");
+            else
+                cmdFile.AppendLine("Material Description = \"" + fullMaterialID.Replace('_', ' ') + "\"");
+
+            cmdFile.AppendLine("LABELQUANTITY = \"" + numLabels + "\"");
+
             File.WriteAllText(templateLocation+"Label Output\\Box Output_"+discnum+".cmd",cmdFile.ToString());
 
-            cmdFile2.AppendLine("LABELNAME = \"" + templateLocation + "Zenostar Barcode Label Template.lab\"");
-            cmdFile2.AppendLine("PRINTER = \"Datamax-O'Neil I-4606e Mark II,USB003\"");
-            cmdFile2.AppendLine("Material Number = \"" + materialID + "\"");
-            cmdFile2.AppendLine("Lot Number = \"" + batchID + "\"");
-            cmdFile2.AppendLine("Piece Count = \"1 pc.\"");
-            cmdFile2.AppendLine("Barcode Label Identifier = \"" + materialID + "\"");
-            cmdFile.AppendLine("LABELQUANTITY = \"" + numLabels + "\"");
-            File.WriteAllText(templateLocation + "Label Output\\Barcode Output_"+discnum+".cmd", cmdFile2.ToString());
-            
+            if(material!="ZFC")
+            {
+                cmdFile2.AppendLine("LABELNAME = \"" + templateLocation + "Zenostar Barcode Label Template.lab\"");
+                cmdFile2.AppendLine("PRINTER = \"Datamax-O'Neil I-4606e Mark II,USB003\"");
+                cmdFile2.AppendLine("Material Number = \"" + materialID + "\"");
+                cmdFile2.AppendLine("Lot Number = \"" + batchID + "\"");
+                cmdFile2.AppendLine("Piece Count = \"1 pc.\"");
+                cmdFile2.AppendLine("Barcode Label Identifier = \"" + fullMaterialID.Replace('_', ' ') + "\"");
+                cmdFile2.AppendLine("LABELQUANTITY = \"" + numLabels + "\"");
+                File.WriteAllText(templateLocation + "Label Output\\Barcode Output_" + discnum + ".cmd", cmdFile2.ToString());
+            }
             try
             {
                 if (discnum == 1) 
                 {
-                    File.WriteAllText("G:/Equipment/GiS-Topex RFID Printer/Generated RFID Files/" + shade + "/" + batchID + "/Box Output_" + batchID + ".cmd", cmdFile.ToString());
-                    File.WriteAllText("G:/Equipment/GiS-Topex RFID Printer/Generated RFID Files/" + shade + "/" + batchID + "/Barcode Output_" + batchID + ".cmd", cmdFile2.ToString());
+                    File.WriteAllText("G:/Equipment/GiS-Topex RFID Printer/Generated RFID Files/" + shadeCopy + "/" + batchID + "/Box Output_" + batchID + ".cmd", cmdFile.ToString());
+                    if(material!="ZFC")
+                        File.WriteAllText("G:/Equipment/GiS-Topex RFID Printer/Generated RFID Files/" + shadeCopy + "/" + batchID + "/Barcode Output_" + batchID + ".cmd", cmdFile2.ToString());
 
                     ProcessStartInfo csStart = new ProcessStartInfo();
                     csStart.CreateNoWindow = true;
@@ -872,7 +924,6 @@ namespace LeToucan
                     csStart.WindowStyle = ProcessWindowStyle.Hidden;
                     csStart.FileName = @"C:\Program Files (x86)\Teklynx\CODESOFT 2014\CS.exe";
                     csStart.Arguments = " /CMD " + templateLocation + "Label Output";
-
                     using (Process exeProcess = Process.Start(csStart))
                         exeProcess.WaitForExit(10000);
                 }
@@ -880,6 +931,8 @@ namespace LeToucan
             catch
             {
                 Console.WriteLine("Opening CS.exe Failed");
+                Console.WriteLine("Program will now end\nPress any key");
+                Console.ReadKey();
             }
 
             int hWnd;
