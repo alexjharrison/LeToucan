@@ -118,67 +118,7 @@ namespace LeToucan
                 Environment.Exit(0);
             }
             
-            //on last run do housekeeping
-            if (endProgram == true) 
-            {
-                int samplesInWeightsFile = 0;
-                int samplesInRFIDFile = 0;
-                try
-                {
-                    samplesInWeightsFile = CountLinesInFile(weightlocation + "_tempcopy" + ".csv") - 3;
-                    samplesInRFIDFile = CountLinesInFile(RFIDLocation + batchID + "_rfid_complete.csv") - 1;
-                }
-                catch
-                {
-                    Console.WriteLine(weightlocation + "_tempcopy" + ".csv or " + RFIDLocation + batchID + "_rfid_complete.csv\nis unreadable");
-                    File.Delete(weightlocation + "_tempcopy" + ".csv");
-                    Console.WriteLine("Program will now end");
-                    Console.WriteLine("Press any key to continue...");
-                    Console.ReadKey();
-                    Environment.Exit(0);
-                }
-
-                if ((batchsize == samplesInWeightsFile)&&(batchsize==samplesInRFIDFile))
-                {
-                    try
-                    {
-                        File.Copy(weightlocation + "_appending" + ".csv", weightlocation + ".csv", true);
-                        File.Delete(weightlocation + "_appending" + ".csv");
-                        File.Delete(weightlocation + "_tempcopy" + ".csv");
-                    }
-                    catch
-                    {
-                        Console.WriteLine(weightlocation + "_appending" + ".csv\nor");
-                        Console.WriteLine(weightlocation + "_tempcopy" + ".csv");
-                        Console.WriteLine("missing or write protected");
-                        Console.WriteLine("Press any key to try again or q to quit...\n");
-                        ConsoleKeyInfo keyStroke = Console.ReadKey(false);
-                        if (keyStroke.KeyChar == 'q') 
-                            Environment.Exit(0);
-                    }
-
-                    //Uncomment this when testing for LabsQ
-                    //File.Copy(weightlocation + ".csv", @"G:\LabsQ\LabsQ Instrument Link\Import\" + batchID + "_" + orderNum + ".csv");
-
-                }
-
-                else
-                {
-                    Console.WriteLine("Final Formatting Failed\nNumber of samples does not match batch size");
-                    Console.WriteLine("Check " + weightlocation + "_appending.csv\nand\n" + RFIDLocation + batchID + "_rfid_complete.csv\nfor discrepancies");
-                    File.Delete(weightlocation + "_tempcopy" + ".csv");
-                    Console.WriteLine("Program will now end");
-                    Console.WriteLine("Press any key to continue...");
-                    Console.ReadKey();
-                    Environment.Exit(0);
-                }
-
-                Environment.Exit(0);
-            }
-            
-            
-                
-            
+            //old cleanup location
             
             //declare variables for loading weights file columns
             var column1 = new List<string>();
@@ -296,6 +236,101 @@ namespace LeToucan
 
             }
             
+            //new cleanup location
+            //on last run do housekeeping
+            if (endProgram == true)
+            {
+                //added code to reprint last labels
+                if ((discnum != batchsize) && (material != "ZTG") && (material != "ZG"))
+                {
+                    PrintBoxLabels(discnum, theoThick, matNum, batchID, material, materialID, batchsize, @"G:\Equipment\GiS-Topex RFID Printer\Datamax Template Files\", 1, shade, fullMaterialID);
+
+                    bool retain2;
+                    PSDensity = CalcDensity(measDiam, measThick, weight, material, innerDiam, ledgeThick);
+                    EF = CalcEF(FSDensity, PSDensity);
+                    shrinkage = CalcShrink(EF);
+                    retain2 = SpecCheck(material, matNum, measDiam, measThick, PSDensity, innerDiam, ledgeThick, ledgeOffset, concentricity, EF, materialID);
+                    ProcessStartInfo theDruck = new ProcessStartInfo();
+                    theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                    theDruck.CreateNoWindow = true;
+                    theDruck.UseShellExecute = false;
+                    theDruck.WindowStyle = ProcessWindowStyle.Hidden;
+                    //zirlux retain
+                    if ((material == "ZFC") && retain2)
+                        theDruck.Arguments = " /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring_Retain.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                    //zirlux non-retain
+                    else if ((material == "ZFC") && !retain2)
+                        theDruck.Arguments = " /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                    //wieland retain
+                    else if (retain2)
+                        theDruck.Arguments = " /P \"G:\\Topex_Printer\\Wieland Label Templates\\Wieland_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                    //wieland non-retain
+                    else if (!retain2)
+                        theDruck.Arguments = " /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                    using (Process exeProcess = Process.Start(theDruck))
+                    {
+                        exeProcess.WaitForExit(20000);
+                    }
+                }
+                //end added code
+
+                int samplesInWeightsFile = 0;
+                int samplesInRFIDFile = 0;
+                try
+                {
+                    samplesInWeightsFile = CountLinesInFile(weightlocation + "_tempcopy" + ".csv") - 3;
+                    samplesInRFIDFile = CountLinesInFile(RFIDLocation + batchID + "_rfid_complete.csv") - 1;
+                }
+                catch
+                {
+                    Console.WriteLine(weightlocation + "_tempcopy" + ".csv or " + RFIDLocation + batchID + "_rfid_complete.csv\nis unreadable");
+                    File.Delete(weightlocation + "_tempcopy" + ".csv");
+                    Console.WriteLine("Program will now end");
+                    Console.WriteLine("Press any key to continue...");
+                    Console.ReadKey();
+                    Environment.Exit(0);
+                }
+                /*
+                if ((batchsize == samplesInWeightsFile)&&(batchsize==samplesInRFIDFile))
+                {
+                 * */
+                try
+                {
+                    File.Copy(weightlocation + "_appending" + ".csv", weightlocation + ".csv", true);
+                    File.Delete(weightlocation + "_appending" + ".csv");
+                    File.Delete(weightlocation + "_tempcopy" + ".csv");
+                }
+                catch
+                {
+                    Console.WriteLine(weightlocation + "_appending" + ".csv\nor");
+                    Console.WriteLine(weightlocation + "_tempcopy" + ".csv");
+                    Console.WriteLine("missing or write protected");
+                    Console.WriteLine("Press any key to try again or q to quit...\n");
+                    ConsoleKeyInfo keyStroke = Console.ReadKey(false);
+                    if (keyStroke.KeyChar == 'q')
+                        Environment.Exit(0);
+                }
+
+                //Uncomment this when testing for LabsQ
+                //File.Copy(weightlocation + ".csv", @"G:\LabsQ\LabsQ Instrument Link\Import\" + batchID + "_" + orderNum + ".csv");
+                /*
+                }
+
+                else
+                {
+                    Console.WriteLine("Final Formatting Failed\nNumber of samples does not match batch size");
+                    Console.WriteLine("Check " + weightlocation + "_appending.csv\nand\n" + RFIDLocation + batchID + "_rfid_complete.csv\nfor discrepancies");
+                    File.Delete(weightlocation + "_tempcopy" + ".csv");
+                    Console.WriteLine("Program will now end");
+                    Console.WriteLine("Press any key to continue...");
+                    Console.ReadKey();
+                    Environment.Exit(0);
+                }
+                */
+                Environment.Exit(0);
+
+            }
+
             
             File.Delete(weightlocation + "_tempcopy" + ".csv");
            
@@ -332,7 +367,7 @@ namespace LeToucan
                         finalColumn8 = new List<string>() { "", "", "", cmmOperator, "TE-47", "TM700", propertyNum, "Inner Diameter" };
                         finalColumn9 = new List<string>() { "", "", "", cmmOperator, "TE-47", "TM700", propertyNum, "Ledge Thickness" };
                         finalColumn10 = new List<string>() { "", "", "", cmmOperator, "TE-47", "TM700", propertyNum, "Ledge Offset" };
-                        finalColumn11 = new List<string>() { "", "", "", cmmOperator, "TE-47", "TM700", propertyNum, "Ledge Concentricity" };
+                        finalColumn11 = new List<string>() { "", "", "", cmmOperator, "TE-47", "TM700", propertyNum, "Concentricity" };
                     }
                     
                 }
@@ -435,18 +470,18 @@ namespace LeToucan
                 density = weight / ((Math.Pow(0.5 * diam, 2.0) * Math.PI) * (thick / 1000));
             else if (material == "ZTR")  //Wieland Translucent Light, Medium... LGS723b
             {
-                //density = (weight * 1000) / (Math.PI * Math.Pow(diam / 2, 2.0) * thick - (41.878 * 2 / 100.2 * diam));  Without Ledge Equation
-                density = (weight * 1000) / ((Math.PI * Math.Pow(innerDiam, 2) * thick / 4) + (Math.PI * ledgeThick * (Math.Pow(diam, 2) - Math.Pow(innerDiam, 2)) / 4));
+                density = (weight * 1000) / (Math.PI * Math.Pow(diam / 2, 2.0) * thick - (41.878 * 2 / 100.2 * diam));  //Without Ledge Equation
+                //density = (weight * 1000) / ((Math.PI * Math.Pow(innerDiam, 2) * thick / 4) + (Math.PI * ledgeThick * (Math.Pow(diam, 2) - Math.Pow(innerDiam, 2)) / 4));
             }
             else if (material == "ZMO")  //Wieland MO LGS723d
             {
-                //density = (weight * 1000) / (Math.PI * Math.Pow((diam / 2), 2.0) * thick - (0.4 * Math.PI * diam));     Without Ledge Equation
-                density = (weight * 1000 * .9975) / ((Math.PI * Math.Pow(innerDiam, 2) * thick / 4) + (Math.PI * ledgeThick * (Math.Pow(diam, 2) - Math.Pow(innerDiam, 2)) / 4));
+                density = (weight * 1000) / (Math.PI * Math.Pow((diam / 2), 2.0) * thick - (0.4 * Math.PI * diam));     //Without Ledge Equation
+                //density = (weight * 1000 * .9975) / ((Math.PI * Math.Pow(innerDiam, 2) * thick / 4) + (Math.PI * ledgeThick * (Math.Pow(diam, 2) - Math.Pow(innerDiam, 2)) / 4));
             }
             else if (material == "ZT")  //Wieland T0,T1...  LGS723e
             {
-                //density = weight * 0.9955 / ((Math.PI * Math.Pow(diam, 2.0) * thick / 4 / 1000 - 2 * 2 * Math.PI * (diam / 2 / 1000) * (0.27 / 2)));  Without Ledge Equation
-                density = (weight * 1000 * .9955) / ((Math.PI * Math.Pow(innerDiam, 2) * thick / 4) + (Math.PI * ledgeThick * (Math.Pow(diam, 2) - Math.Pow(innerDiam, 2)) / 4));
+                density = weight * 0.9955 / ((Math.PI * Math.Pow(diam, 2.0) * thick / 4 / 1000 - 2 * 2 * Math.PI * (diam / 2 / 1000) * (0.27 / 2)));  //Without Ledge Equation
+                //density = (weight * 1000 * .9955) / ((Math.PI * Math.Pow(innerDiam, 2) * thick / 4) + (Math.PI * ledgeThick * (Math.Pow(diam, 2) - Math.Pow(innerDiam, 2)) / 4));
             }
             else if (material == "ZTG")  //Wieland Green Light, Medium... LGS723c
                 density = (weight*1000)/((Math.PI*(Math.Pow((diam/2),2.0)*thick)-(41.878*2/100.2*diam)));
@@ -826,6 +861,7 @@ namespace LeToucan
                 }
                     
                 //only check ledge stuff on non-green wieland discs
+                /*  OBSOLETE / NOT CHECKED ANYMORE
                 if(material=="ZT"||material=="ZTR"||material=="ZMO")
                 {
                     //Inner Diameter spec
@@ -852,8 +888,9 @@ namespace LeToucan
                         thingOuttaSpec = "Ledge Offset: " + Math.Round(ledgeOffset, Convert.ToInt32(column16[1])) + "\n Spec: <" + Math.Round(Convert.ToDouble(column16[rownum]), Convert.ToInt32(column16[1]));
                         return true;
                     }
-
+                    
                 }
+                */
             }
             //check for EF in zirlux discs
             else
