@@ -342,10 +342,10 @@ namespace LeToucan
             var finalColumn5 = new List<string>();
             var finalColumn6 = new List<string>();
             var finalColumn7 = new List<string>();
-            var finalColumn8 = new List<string>();
-            var finalColumn9 = new List<string>();
-            var finalColumn10 = new List<string>();
-            var finalColumn11 = new List<string>();
+            //var finalColumn8 = new List<string>();  LEDGE STUFF TAKEN OUT
+            //var finalColumn9 = new List<string>();
+            //var finalColumn10 = new List<string>();
+            //var finalColumn11 = new List<string>();
             //if first disc create header to file
             if(discnum==1)
             {
@@ -362,6 +362,7 @@ namespace LeToucan
                 {
                     finalColumn6 = new List<string>() { "", "", "", cmmOperator, "TE-47", "TM700", propertyNum, "EF" };
                     finalColumn7 = new List<string>() { "", "", "", cmmOperator, "TE-47", "TM700", propertyNum, "Shrinkage" };
+                    /*
                     if(material!="ZFC")
                     {
                         finalColumn8 = new List<string>() { "", "", "", cmmOperator, "TE-47", "TM700", propertyNum, "Inner Diameter" };
@@ -369,6 +370,7 @@ namespace LeToucan
                         finalColumn10 = new List<string>() { "", "", "", cmmOperator, "TE-47", "TM700", propertyNum, "Ledge Offset" };
                         finalColumn11 = new List<string>() { "", "", "", cmmOperator, "TE-47", "TM700", propertyNum, "Concentricity" };
                     }
+                    */
                     
                 }
                 
@@ -380,13 +382,13 @@ namespace LeToucan
                     {
                         newLine = string.Join(",", finalColumn1[i], finalColumn2[i], finalColumn3[i], finalColumn4[i], finalColumn5[i]);
                     }
-                    else if(material=="ZFC")
-                    {
-                        newLine = string.Join(",", finalColumn1[i], finalColumn2[i], finalColumn3[i], finalColumn4[i], finalColumn5[i], finalColumn6[i], finalColumn7[i]);
-                    }
+                    //else if(material=="ZFC")
+                    //{
+                    //    newLine = string.Join(",", finalColumn1[i], finalColumn2[i], finalColumn3[i], finalColumn4[i], finalColumn5[i], finalColumn6[i], finalColumn7[i]);
+                    //}
                     else
                     {
-                        newLine = string.Join(",", finalColumn1[i], finalColumn2[i], finalColumn3[i], finalColumn4[i], finalColumn5[i], finalColumn6[i], finalColumn7[i], finalColumn8[i], finalColumn9[i], finalColumn10[i], finalColumn11[i]);
+                        newLine = string.Join(",", finalColumn1[i], finalColumn2[i], finalColumn3[i], finalColumn4[i], finalColumn5[i], finalColumn6[i], finalColumn7[i]);
                     }
                     
                     csv.AppendLine(newLine);
