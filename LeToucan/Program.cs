@@ -376,8 +376,8 @@ namespace LeToucan
                     finalColumn3 = new List<string>() { "Start Date", thisDay.ToString("d"), "", "Diameter" };
                     finalColumn4 = new List<string>() { "Disc Thickness", theoThick, "", "Thickness" };
                     finalColumn5 = new List<string>() { "Quantity", totalQuantity.ToString(), "", "Density" };
-                    finalColumn6 = new List<string>() { "Disc Shade", shade, "", "Status" };
-                    finalColumn7 = new List<string>() { "Theoretical Density", FSDensity.ToString(), "", "Nonconform" };
+                    finalColumn6 = new List<string>() { "Disc Shade", shade, "", "" };
+                    finalColumn7 = new List<string>() { "Theoretical Density", FSDensity.ToString(), "", "" };
                     finalColumn8 = new List<string>() { "CMM IVMI #", CMMID, "", "" };
                     finalColumn9 = new List<string>() { "", "", "", "" };
                 }
@@ -399,7 +399,7 @@ namespace LeToucan
                 
                 
                 var csv = new StringBuilder();
-                for (int i = 0; i <= 5; i++)
+                for (int i = 0; i < 4; i++)
                 {
                     string newLine;
                     newLine = string.Join(",", finalColumn1[i], finalColumn2[i], finalColumn3[i], finalColumn4[i], finalColumn5[i], finalColumn6[i], finalColumn7[i], finalColumn8[i], finalColumn9[i]);
@@ -414,26 +414,26 @@ namespace LeToucan
             bool retain;
             if (material=="ZTG"||material=="ZG")
             {
-                nextLine = (discnum + "," + weight + "," + measDiam + "," + measThick + "," + Math.Round(PSDensity,3)  + ",N/A,N/A"+ Environment.NewLine);
+                nextLine = (discnum + "," + weight + "," + measDiam + "," + measThick + "," + Math.Round(PSDensity, 3)  + Environment.NewLine);
                 File.AppendAllText(weightlocation + "_appending" + ".csv", nextLine);
             }
             else if (material=="ZFC")
             {
                 EF = CalcEF(FSDensity, PSDensity);
                 shrinkage = CalcShrink(EF);
-                nextLine = (discnum + "," + weight + "," + measDiam + "," + measThick + "," + Math.Round(PSDensity,3) + "," + Math.Round(EF,4) + "," + Math.Round(shrinkage,3) + Environment.NewLine);
+                retain = SpecCheck(material, matNum, measDiam, measThick, PSDensity, innerDiam, ledgeThick, ledgeOffset, concentricity, EF, materialID);
+                nextLine = (discnum + "," + weight + "," + measDiam + "," + measThick + "," + Math.Round(PSDensity, 3) + "," + Math.Round(EF, 4) + "," + Math.Round(shrinkage, 3) + "," + isConforming + "," + whatsOuttaSpec + Environment.NewLine);
                 File.AppendAllText(weightlocation + "_appending" + ".csv", nextLine);
-                retain = SpecCheck(material, matNum, measDiam, measThick, PSDensity, innerDiam, ledgeThick,ledgeOffset, concentricity, EF, materialID);
                 string finalExport = GenerateRFIDOutput(discnum,batchID,theoThick,matNum,material,theoDiam,EF,simultaneousPrints,batchsize,RFIDLocation,shade,shadeAlias,measDiam,rfidheader,shrinkage,retain,printToggle);
             }
             else
             {
                 EF = CalcEF(FSDensity, PSDensity);
                 shrinkage = CalcShrink(EF);
-                nextLine = (discnum + "," + weight + "," + measDiam + "," + measThick + "," + Math.Round(PSDensity, 3) + "," + Math.Round(EF, 4) + "," + Math.Round(shrinkage, 3) + Environment.NewLine);
+                retain = SpecCheck(material, matNum, measDiam, measThick, PSDensity, innerDiam, ledgeThick, ledgeOffset, concentricity, EF, materialID);
+                nextLine = (discnum + "," + weight + "," + measDiam + "," + measThick + "," + Math.Round(PSDensity, 3) + "," + Math.Round(EF, 4) + "," + Math.Round(shrinkage, 3) + "," + isConforming + "," + whatsOuttaSpec + Environment.NewLine);
                 //nextLine = (discnum + "," + weight + "," + measDiam + "," + measThick + "," + Math.Round(PSDensity,3) + "," + Math.Round(EF,4) + "," + Math.Round(shrinkage,3)+","+Math.Round(innerDiam,2)+","+Math.Round(ledgeThick,2)+","+Math.Round(ledgeOffset,2)+","+Math.Round(concentricity,1) + Environment.NewLine);
                 File.AppendAllText(weightlocation + "_appending" + ".csv", nextLine);
-                retain = SpecCheck(material, matNum, measDiam, measThick, PSDensity, innerDiam, ledgeThick, ledgeOffset, concentricity, EF, materialID);
                 string finalExport = GenerateRFIDOutput(discnum,batchID,theoThick,matNum,material,theoDiam,EF,simultaneousPrints,batchsize,RFIDLocation,shade,shadeAlias,measDiam,rfidheader,shrinkage,retain,printToggle);
             }
             
@@ -1027,7 +1027,7 @@ namespace LeToucan
 
             File.WriteAllText(templateLocation+"Label Output\\Box Output_"+discnum+".cmd",cmdFile.ToString());
 
-            if(material!="ZFC")
+            if (material != "ZFC" && material != "ZCLT" && material != "ZMU") 
             {
                 cmdFile2.AppendLine("LABELNAME = \"" + templateLocation + "Zenostar Barcode Label Template.lab\"");
                 cmdFile2.AppendLine("PRINTER = \"Datamax-O'Neil I-4606e Mark II,USB003\"");
