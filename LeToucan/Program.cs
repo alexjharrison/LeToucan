@@ -249,7 +249,7 @@ namespace LeToucan
                 //added code to reprint last labels
                 if ((discnum != batchsize) && (material != "ZTG") && (material != "ZG"))
                 {
-                    PrintBoxLabels(discnum, theoThick, matNum, batchID, material, materialID, batchsize, @"G:\Prod_Labels\Zirconia\Box Labels\", 1, shade, fullMaterialID, packagedMatNum);
+                    PrintBoxLabels(discnum, theoThick, matNum, batchID, material, materialID, batchsize, "G:\\Prod_Labels\\Zirconia\\Box Labels\\", 1, shade, fullMaterialID, packagedMatNum);
 
                     bool retain2;
                     PSDensity = CalcDensity(measDiam, measThick, weight, material, innerDiam, ledgeThick);
@@ -263,28 +263,29 @@ namespace LeToucan
                     theDruck.WindowStyle = ProcessWindowStyle.Hidden;
                     //zirlux retain
                     if ((material == "ZFC") && retain2)
-                        theDruck.Arguments = " /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring_Retain.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                        theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Zirlux FC2 With Ring_Retain.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
                     //zirlux non-retain
                     else if ((material == "ZFC") && !retain2)
-                        theDruck.Arguments = " /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                    //new wieland retain (ZMU,ZCMO,ZCLT)
-                    else if ((material == "ZMU" || material == "ZCMO" || material == "ZCLT") && retain2)
-                        theDruck.Arguments = " /P \"G:\\Topex_Printer\\Ivoclar_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                    //new wieland non-retain (ZMU,ZCMO,ZCLT)
+                        theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                    //new Ivoclar retain (ZMU,ZCMO,ZCLT)
                     else if ((material == "ZMU" || material == "ZCMO" || material == "ZCLT") && !retain2)
-                        theDruck.Arguments = " /P \"G:\\Topex_Printer\\Ivoclar_CE0123_retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                        theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Ivoclar_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                    //new Ivcolar non-retain (ZMU,ZCMO,ZCLT)
+                    else if ((material == "ZMU" || material == "ZCMO" || material == "ZCLT") && retain2)
+                        theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Ivoclar_CE0123_retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
                     //old wieland retain (ZMO,ZT,ZTR)
                     else if (retain2)
-                        theDruck.Arguments = " /P \"G:\\Topex_Printer\\Wieland Label Templates\\Wieland_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                        theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Wieland_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
                     //old wieland non-retain(ZMO,ZT,ZTR)
                     else if (!retain2)
-                        theDruck.Arguments = " /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                    
+                        theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
 
+                    
                     using (Process exeProcess = Process.Start(theDruck))
                     {
                         exeProcess.WaitForExit(20000);
                     }
+                    
                 }
                 //end added code
 
@@ -377,7 +378,7 @@ namespace LeToucan
                     finalColumn4 = new List<string>() { "Disc Thickness", theoThick, "", "Thickness" };
                     finalColumn5 = new List<string>() { "Quantity", totalQuantity.ToString(), "", "Density" };
                     finalColumn6 = new List<string>() { "Disc Shade", shade, "", "" };
-                    finalColumn7 = new List<string>() { "Theoretical Density", FSDensity.ToString(), "", "" };
+                    finalColumn7 = new List<string>() { "Theoretical Density", "N/A", "", "" };
                     finalColumn8 = new List<string>() { "CMM IVMI #", CMMID, "", "" };
                     finalColumn9 = new List<string>() { "", "", "", "" };
                 }
@@ -436,12 +437,12 @@ namespace LeToucan
                 File.AppendAllText(weightlocation + "_appending" + ".csv", nextLine);
                 string finalExport = GenerateRFIDOutput(discnum,batchID,theoThick,matNum,material,theoDiam,EF,simultaneousPrints,batchsize,RFIDLocation,shade,shadeAlias,measDiam,rfidheader,shrinkage,retain,printToggle);
             }
-            
-            string labelTemplate = @"G:\Equipment\GiS-Topex RFID Printer\Datamax Template Files\";
+
+            string labelTemplate = "G:\\Prod_Labels\\Zirconia\\Box Labels\\";
             
             if(printToggle)
             {
-                if (material == "ZFC" || material == "ZMO" || material == "ZTR" || material == "ZT")
+                if (material != "ZG" && material != "ZTG")
                 {
                     if (discnum == 1 || discnum == batchsize)
                         PrintBoxLabels(discnum, theoThick, matNum, batchID, material, materialID, batchsize, labelTemplate, 2, shade, fullMaterialID,packagedMatNum);
@@ -647,161 +648,90 @@ namespace LeToucan
             theDruck.CreateNoWindow = true;
             theDruck.UseShellExecute = false;
             theDruck.WindowStyle = ProcessWindowStyle.Hidden;
-            if(simultaneousPrints==1)
-            {
-                File.WriteAllText(RFIDLocation + batchID + "_rfid_" + discnum + ".csv", RFIDHeader);
-                File.AppendAllText(RFIDLocation + batchID + "_rfid_" + discnum + ".csv", finalExport);
+            
+            File.WriteAllText(RFIDLocation + batchID + "_rfid_" + discnum + ".csv", RFIDHeader);
+            File.AppendAllText(RFIDLocation + batchID + "_rfid_" + discnum + ".csv", finalExport);
                 
-                {
-                    if (printToggle)
-                    {
-                        try
-                        {
-                            //put in command to start rfid label printer
-                            if (material == "ZFC") //Zirlux
-                            {
-
-                                theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
-                                if (retain)
-                                {
-                                    theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\TOPEX_BITMAPS\\Zirlux FC2 With Ring_Retain.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                                    Console.WriteLine(thingOuttaSpec);
-                                    Console.WriteLine("Retain Label is Now Being Printed");
-                                }
-                                else
-                                {
-                                    theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\TOPEX_BITMAPS\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                                    Console.WriteLine("C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe" + " /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv \"  /start /hidden");
-                                    Console.WriteLine("\n\nDisc is in spec\nLabel is printing");
-                                }
-                            }
-
-                            //new wieland ZMU, ZCLT,ZCMO
-                            else if (material == "ZMU" || material == "ZCLT" || material == "ZCMO")
-                            {
-                                theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
-                                if (retain)
-                                {
-                                    theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\TOPEX_BITMAPS\\Ivoclar_CE0123.txt_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                                    Console.WriteLine(thingOuttaSpec);
-                                    Console.WriteLine("Retain Label is Now Being Printed");
-                                }
-                                else
-                                {
-                                    theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\TOPEX_BITMAPS\\Ivoclar_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                                    Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv \"  /start /hidden");
-                                    Console.WriteLine("\n\nDisc is in spec\nLabel is printing");
-                                }
-                            }
-
-                            else  //Old Wieland
-                            {
-                                theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
-                                if (retain)
-                                {
-                                    theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\TOPEX_BITMAPS\\Wieland_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                                    Console.WriteLine(thingOuttaSpec);
-                                    Console.WriteLine("Retain Label is Now Being Printed");
-                                }
-                                else
-                                {
-                                    theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\TOPEX_BITMAPS\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                                    Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv \"  /start /hidden");
-                                    Console.WriteLine("\n\nDisc is in spec\nLabel is printing");
-                                }
-                            }
-                            using (Process exeProcess = Process.Start(theDruck))
-                            {
-                                exeProcess.WaitForExit(20000);
-                            }
-                            if(discnum==1||discnum==batchSize)
-                            {
-                                using (Process exeProcess = Process.Start(theDruck))
-                                {
-                                    exeProcess.WaitForExit(10);
-                                }
-                            }
-
-                        }
-                        catch
-                        {
-                            Console.WriteLine("Failed to find DruckerStation.exe");
-                            Environment.Exit(0);
-                        }
-                    }
-                }
-            }
-            else
             {
-                int highNum = 0;
-                int lowNum;
-                for (int i = 0; highNum < discnum; i++)
-                    highNum = simultaneousPrints * i;
-                lowNum = highNum - simultaneousPrints + 1;
-                if (discnum % simultaneousPrints == 1)
-                    File.WriteAllText(RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv", RFIDHeader);
-                File.AppendAllText(RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv", finalExport);
-                if ((discnum % simultaneousPrints == 0) || (discnum == batchSize))
+                if (printToggle)
                 {
-                    if (printToggle)
+                    try
                     {
-                        try
+                        //put in command to start rfid label printer
+                        if (material == "ZFC") //Zirlux
                         {
-                            if (material == "ZFC") //Zirlux
-                            {
-                                theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
-                                if (retain)
-                                    theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\TOPEX_BITMAPS\\Zirlux FC2 With Ring_Retain.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv\"  /start /hidden";
-                                else
-                                    theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\TOPEX_BITMAPS\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv\"  /start /hidden";
-                                Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\TOPEX_BITMAPS\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv \"  /start /hidden");
-                                //Console.ReadKey();
-                            }
 
-                            //new wieland ZMU, ZCLT,ZCMO
-                            else if (material == "ZMU" || material == "ZCLT" || material == "ZCMO")
+                            theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                            if (retain)
                             {
-                                theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
-                                if (retain)
-                                    theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\TOPEX_BITMAPS\\Ivoclar_CE0123.txt_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv\"  /start /hidden";
-                                else
-                                    theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\TOPEX_BITMAPS\\Ivoclar_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv\"  /start /hidden";
-                                Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\TOPEX_BITMAPS\\Ivoclar_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv \"  /start /hidden");
+                                theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Zirlux FC2 With Ring_Retain.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                Console.WriteLine(thingOuttaSpec);
+                                Console.WriteLine("Retain Label is Now Being Printed");
                             }
+                            else
+                            {
+                                theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                Console.WriteLine("C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe" + " /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv \"  /start /hidden");
+                                Console.WriteLine("\n\nDisc is in spec\nLabel is printing");
+                            }
+                        }
 
-                            else  //Old Wieland ZMO,ZT,ZTR
+                        //new wieland ZMU, ZCLT,ZCMO
+                        else if (material == "ZMU" || material == "ZCLT" || material == "ZCMO")
+                        {
+                            theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                            if (retain)
                             {
-                                theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
-                                if (retain)
-                                    theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\TOPEX_BITMAPS\\Wieland_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv\"  /start /hidden";
-                                else
-                                    theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\TOPEX_BITMAPS\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv\"  /start /hidden";
-                                Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\TOPEX_BITMAPS\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + Convert.ToString(lowNum) + "-" + Convert.ToString(highNum) + ".csv \"  /start /hidden");
-                                //Console.ReadKey();
+                                theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Ivoclar_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                Console.WriteLine(thingOuttaSpec);
+                                Console.WriteLine("Retain Label is Now Being Printed");
                             }
+                            else
+                            {
+                                theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Ivoclar_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv \"  /start /hidden");
+                                Console.WriteLine("\n\nDisc is in spec\nLabel is printing");
+                            }
+                        }
+
+                        else  //Old Wieland
+                        {
+                            theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                            if (retain)
+                            {
+                                theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Wieland_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                Console.WriteLine(thingOuttaSpec);
+                                Console.WriteLine("Retain Label is Now Being Printed");
+                            }
+                            else
+                            {
+                                theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv \"  /start /hidden");
+                                Console.WriteLine("\n\nDisc is in spec\nLabel is printing");
+                            }
+                        }
+                        
+                        using (Process exeProcess = Process.Start(theDruck))
+                        {
+                            exeProcess.WaitForExit(20000);
+                        }
+                        if(discnum==1||discnum==batchSize)
+                        {
                             using (Process exeProcess = Process.Start(theDruck))
                             {
-                                exeProcess.WaitForExit();
-                            }
-                            if (discnum == 1 || discnum == batchSize)
-                            {
-                                using (Process exeProcess = Process.Start(theDruck))
-                                {
-                                    exeProcess.WaitForExit(10);
-                                }
+                                exeProcess.WaitForExit(10);
                             }
                         }
-                        catch
-                        {
-                            Console.WriteLine("Failed to find DruckerStation.exe");
-                            Environment.Exit(0);
-                        }
+                        
                     }
-
-                    //put in command to start rfid label printer
-                    
+                    catch
+                    {
+                        Console.WriteLine("Failed to find DruckerStation.exe");
+                        Environment.Exit(0);
+                    }
                 }
             }
+            
             return finalExport;
         }
         static int CountLinesInFile(string f)
@@ -994,22 +924,26 @@ namespace LeToucan
             var cmdFile = new StringBuilder();
             var cmdFile2 = new StringBuilder();
 
+            string datamaxLabelAutoPrinterFolderGuy = "G:\\Equipment\\GiS-Topex RFID Printer\\Datamax Template Files\\";
+
+            if (material == "ZMU") shade = "MT Multi " + shade;
             string shadeCopy = shade;
             if (Char.IsDigit(shade[1])) shade = shade.Insert(1, " ");
             else if (Char.IsDigit(shade[2])) shade = shade.Insert(2, " ");
             if (shade == "Sun-Chroma") shade = "T sc";
             if (shade == "Sun") shade = "T s";
             
+            
             if(material=="ZMO"||material=="ZT")
                 cmdFile.AppendLine("LABELNAME = \"" + templateLocation + "Zenostar Box Label Template.lab\"");
             else if(material=="ZTR")
                 cmdFile.AppendLine("LABELNAME = \"" + templateLocation + "Zenostar Trans Box Label Template.lab\"");
             else if (material=="ZMU")
-                cmdFile.AppendLine("LABELNAME = \"" + templateLocation + "Zircad Disc Template.lab\"");
+                cmdFile.AppendLine("LABELNAME = \"" + templateLocation + "ZirCAD Disc Template.lab\"");
             else if (material == "ZCLT")
-                cmdFile.AppendLine("LABELNAME = \"" + templateLocation + "Zircad Disc Template.lab\"");
+                cmdFile.AppendLine("LABELNAME = \"" + templateLocation + "ZirCAD Disc Template.lab\"");
             else if (material == "ZCMO")
-                cmdFile.AppendLine("LABELNAME = \"" + templateLocation + "Zircad Disc Template.lab\"");
+                cmdFile.AppendLine("LABELNAME = \"" + templateLocation + "ZirCAD Disc Template.lab\"");
             else 
                 cmdFile.AppendLine("LABELNAME = \"" + templateLocation + "Zirlux Box Label Template.lab\"");
 
@@ -1025,7 +959,7 @@ namespace LeToucan
 
             cmdFile.AppendLine("LABELQUANTITY = \"" + numLabels + "\"");
 
-            File.WriteAllText(templateLocation+"Label Output\\Box Output_"+discnum+".cmd",cmdFile.ToString());
+            File.WriteAllText(datamaxLabelAutoPrinterFolderGuy+"Label Output\\Box Output_"+discnum+".cmd",cmdFile.ToString());
 
             if (material == "ZT" || material == "ZMO") 
             {
@@ -1036,24 +970,26 @@ namespace LeToucan
                 cmdFile2.AppendLine("Piece Count = \"1 pc.\"");
                 cmdFile2.AppendLine("Barcode Label Identifier = \"" + fullMaterialID.Replace('_', ' ') + "\"");
                 cmdFile2.AppendLine("LABELQUANTITY = \"" + numLabels + "\"");
-                File.WriteAllText(templateLocation + "Label Output\\Barcode Output_" + discnum + ".cmd", cmdFile2.ToString());
+                File.WriteAllText(datamaxLabelAutoPrinterFolderGuy + "Label Output\\Barcode Output_" + discnum + ".cmd", cmdFile2.ToString());
             }
             try
             {
                 if (discnum == 1) 
                 {
                     File.WriteAllText("G:/Equipment/GiS-Topex RFID Printer/Generated RFID Files/" + shadeCopy + "/" + batchID + "/Box Output_" + batchID + ".cmd", cmdFile.ToString());
-                    if(material!="ZFC")
+                    if (material == "ZT" || material == "ZMO")
                         File.WriteAllText("G:/Equipment/GiS-Topex RFID Printer/Generated RFID Files/" + shadeCopy + "/" + batchID + "/Barcode Output_" + batchID + ".cmd", cmdFile2.ToString());
 
+                    
                     ProcessStartInfo csStart = new ProcessStartInfo();
                     csStart.CreateNoWindow = true;
                     csStart.UseShellExecute = false;
                     csStart.WindowStyle = ProcessWindowStyle.Hidden;
                     csStart.FileName = @"C:\Program Files (x86)\Teklynx\CODESOFT 2014\CS.exe";
-                    csStart.Arguments = " /CMD " + templateLocation + "Label Output";
+                    csStart.Arguments = " /CMD " + datamaxLabelAutoPrinterFolderGuy + "Label Output";
                     using (Process exeProcess = Process.Start(csStart))
                         exeProcess.WaitForExit(10000);
+                    
                 }
             }
             catch
@@ -1062,7 +998,7 @@ namespace LeToucan
                 Console.WriteLine("Program will now end\nPress any key");
                 Console.ReadKey();
             }
-
+            
             int hWnd;
             Process[] processRunning = Process.GetProcesses();
             foreach (Process pr in processRunning)
@@ -1090,6 +1026,7 @@ namespace LeToucan
                 foreach (var process in Process.GetProcessesByName("CS"))
                     process.Kill();
             }
+            
         }
 
         [DllImport("User32")]
