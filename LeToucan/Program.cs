@@ -39,7 +39,7 @@ namespace LeToucan
              */
 
             int simultaneousPrints=0; Boolean endProgram=false; double measDiam=0; double measThick=0;
-            String shade=""; int matNum=0; double FSDensity=0; String shadeAlias=""; String batchID="";
+            String shade=""; string matNum=""; double FSDensity=0; String shadeAlias=""; String batchID="";
             int discnum=0; double weight=0; string theoDiam=""; string orderNum=""; string theoThick="";
             string cmmOperator=""; String material=""; double ledgeThick=0; double innerDiam=0; string scaleID="";
             string weightOperator=""; string propertyNum=""; double ledgeOffset=0; double concentricity=0;
@@ -55,7 +55,7 @@ namespace LeToucan
                 simultaneousPrints = Convert.ToInt32(args[17]); //this is how after how many discs labels are printed
                 endProgram = Convert.ToBoolean(args[18]);
                 measDiam = Convert.ToDouble(args[11]); measThick = Convert.ToDouble(args[12]); 
-                shade = args[6]; matNum = Convert.ToInt32(args[9]); 
+                shade = args[6]; matNum = args[9]; 
                 FSDensity = Convert.ToDouble(args[10]); shadeAlias = args[8];
                 batchID = args[1]; orderNum = args[2]; 
                 discnum = Convert.ToInt32(args[0]); 
@@ -66,23 +66,38 @@ namespace LeToucan
                 printToggle = Convert.ToBoolean(args[19]); materialID = args[3];
                 fullMaterialID = args[20]; packagedMatNum = args[21]; CMMID = args[22];
                 totalQuantity = Convert.ToInt32(args[23]);
+
+                
             
             //to be calculated
             }
             catch
             {
                 Console.WriteLine("Your variables are garbage\nProgram will now end");
+
+                string arguments = "";
+                for (int i = 0; i < args.Length; i++) arguments = arguments  + " " + args[i]; 
+                System.IO.StreamWriter file = new System.IO.StreamWriter("G:\\Public\\test.txt");
+                file.WriteLine(arguments); file.Close();
+
                 Console.ReadKey();
                 Environment.Exit(0);
             }
 
 
+            //debugging
+            string things = "";
+            for (int i = 0; i < args.Length; i++) things = things + " " + args[i];
+            System.IO.StreamWriter file2 = new System.IO.StreamWriter("G:\\Public\\test.txt");
+            file2.WriteLine(things); file2.Close();
+
+
             //RFID file header
-            string rfidheader = @"ROHL_ID	""SKAL_FAKT""	""NOMINAL_HOEHE_ALIAS""	""NOMINAL_HOEHE""	""MATR_KUERZEL""	""BARCODE_NUTZDATEN""	""LIEFER_NUMMER""	""DRUCK_NUMMER""	""ETIKETTEN_HOEHE""	""SINTER_NR""	""DURCHMESSER""	""QUALITAET""	""LIEFERANT""	""LOT""	""DATUM_EINGANG""	""AUTH_CODE""	""BARCODE""	""ERSATZ_CODE""	""MAT_NAME""	""QUALT""	";
+            string rfidheader = @"ROHL_ID	""SKAL_FAKT""	""NOMINAL_HOEHE_ALIAS""	""NOMINAL_HOEHE""	""MATR_KUERZEL""	""BARCODE_NUTZDATEN""	""LIEFER_NUMMER""	""DRUCK_NUMMER""	""ETIKETTEN_HOEHE""	""SINTER_NR""	""DURCHMESSER""	""QUALITAET""	""LIEFERANT""	""LOT""	""DATUM_EINGANG""	""AUTH_CODE""	""BARCODE""	""ERSATZ_CODE""	""MAT_NAME""	""QUALT""	""MAT_NR""	""SKAL_FAKT2""	";
 
             //declare locations of files
             string weightlocation = "G:/LabX_Export/" + batchID + "_" + orderNum;
-            string RFIDLocation = "G:/Equipment/GiS-Topex RFID Printer/Generated RFID Files/" +shade+"/"+ batchID + "/";
+            string RFIDLocation = "G:\\Equipment\\GiS-Topex RFID Printer\\Generated RFID Files\\" +shade+"\\"+ batchID + "\\";
 
             //make temporary copy
             bool fileLocked = true;
@@ -268,7 +283,7 @@ namespace LeToucan
                     else if ((material == "ZFC") && !retain2)
                         theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
                     //new Ivoclar retain (ZMU,ZCMO,ZCLT)
-                    else if ((material == "ZMU" || material == "ZCMO" || material == "ZCLT") && !retain2)
+                    else if ((material == "ZMU"||material == "ZCMO" || material == "ZCLT") && !retain2)
                         theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Ivoclar_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
                     //new Ivcolar non-retain (ZMU,ZCMO,ZCLT)
                     else if ((material == "ZMU" || material == "ZCMO" || material == "ZCLT") && retain2)
@@ -425,7 +440,7 @@ namespace LeToucan
                 retain = SpecCheck(material, matNum, measDiam, measThick, PSDensity, innerDiam, ledgeThick, ledgeOffset, concentricity, EF, materialID);
                 nextLine = (discnum + "," + weight + "," + measDiam + "," + measThick + "," + Math.Round(PSDensity, 3) + "," + Math.Round(EF, 4) + "," + Math.Round(shrinkage, 3) + "," + isConforming + "," + whatsOuttaSpec + Environment.NewLine);
                 File.AppendAllText(weightlocation + "_appending" + ".csv", nextLine);
-                string finalExport = GenerateRFIDOutput(discnum,batchID,theoThick,matNum,material,theoDiam,EF,simultaneousPrints,batchsize,RFIDLocation,shade,shadeAlias,measDiam,rfidheader,shrinkage,retain,printToggle);
+                string finalExport = GenerateRFIDOutput(discnum,batchID,theoThick,matNum,material,theoDiam,EF,simultaneousPrints,batchsize,RFIDLocation,shade,shadeAlias,measDiam,rfidheader,shrinkage,retain,printToggle,materialID);
             }
             else
             {
@@ -435,7 +450,7 @@ namespace LeToucan
                 nextLine = (discnum + "," + weight + "," + measDiam + "," + measThick + "," + Math.Round(PSDensity, 3) + "," + Math.Round(EF, 4) + "," + Math.Round(shrinkage, 3) + "," + isConforming + "," + whatsOuttaSpec + Environment.NewLine);
                 //nextLine = (discnum + "," + weight + "," + measDiam + "," + measThick + "," + Math.Round(PSDensity,3) + "," + Math.Round(EF,4) + "," + Math.Round(shrinkage,3)+","+Math.Round(innerDiam,2)+","+Math.Round(ledgeThick,2)+","+Math.Round(ledgeOffset,2)+","+Math.Round(concentricity,1) + Environment.NewLine);
                 File.AppendAllText(weightlocation + "_appending" + ".csv", nextLine);
-                string finalExport = GenerateRFIDOutput(discnum,batchID,theoThick,matNum,material,theoDiam,EF,simultaneousPrints,batchsize,RFIDLocation,shade,shadeAlias,measDiam,rfidheader,shrinkage,retain,printToggle);
+                string finalExport = GenerateRFIDOutput(discnum,batchID,theoThick,matNum,material,theoDiam,EF,simultaneousPrints,batchsize,RFIDLocation,shade,shadeAlias,measDiam,rfidheader,shrinkage,retain,printToggle,materialID);
             }
 
             string labelTemplate = "G:\\Prod_Labels\\Zirconia\\Box Labels\\";
@@ -606,14 +621,14 @@ namespace LeToucan
             File.WriteAllText("G:/LabX_Export/LabsQ_LabX_Integration/WielandID Database.csv",csv.ToString());
             return Convert.ToString(lastWielandNum + 1);
         }
-        static String GenerateRFIDOutput(int discnum, string batchID, string theoThick, int matNum, string material, string theoDiam, double EF, int simultaneousPrints, int batchSize, string RFIDLocation, string shade, string shadeAlias,double measDiam, string RFIDHeader, double shrinkage,bool retain, bool printToggle)
+        static String GenerateRFIDOutput(int discnum, string batchID, string theoThick, string matNum, string material, string theoDiam, double EF, int simultaneousPrints, int batchSize, string RFIDLocation, string shade, string shadeAlias,double measDiam, string RFIDHeader, double shrinkage,bool retain, bool printToggle, string materialID)
         {
 
             //generate rfid output csv
             string efDigits; string discID; string encodedDiscNum; string discInfoEncoded; string barcodeNutzdaten; string barcode; string encodedCode; string finalExport; int heightAlias; string WielandID; string stringNum; string shadeAlias2="";
             if (material == "ZFC")
             {
-                heightAlias = 0; matNum = 0;
+                heightAlias = 0; matNum = "0";
                 WielandID = batchID.Substring(1, 5);
                 shadeAlias = shade; shadeAlias2 = shade;
                         
@@ -629,17 +644,18 @@ namespace LeToucan
             discID = String.Concat(WielandID, stringNum);
             
             efDigits = Convert.ToString(Convert.ToString((Math.Round(EF, 4) - 1) * 10000));
-            encodedDiscNum = Encode(Convert.ToInt32(discID));
-            discInfoEncoded = Convert.ToString(Encode(Convert.ToInt32(String.Concat(Convert.ToString(matNum), Convert.ToString(Math.Abs(Convert.ToInt32(efDigits))), Convert.ToString(heightAlias)))));
-            barcodeNutzdaten = String.Concat(discID, Convert.ToString(matNum), efDigits, Convert.ToString(heightAlias));
+            //encodedDiscNum = Encode(Convert.ToInt32(discID));
+            //discInfoEncoded = Convert.ToString(Encode(Convert.ToInt32(String.Concat(matNum, Convert.ToString(Math.Abs(Convert.ToInt32(efDigits))), Convert.ToString(heightAlias)))));
+            barcodeNutzdaten = String.Concat(discID, matNum, efDigits, Convert.ToString(heightAlias));
             barcode = String.Concat(barcodeNutzdaten, "4418753237");
-            encodedCode = String.Concat(Convert.ToString(encodedDiscNum), "-", discInfoEncoded, "-", "2e4mahh");
+            //encodedCode = String.Concat(Convert.ToString(encodedDiscNum), "-", discInfoEncoded, "-", "2e4mahh");
+            encodedCode = "";
             
             //export rfid to ..._complete.csv 
-            if(material=="ZFC")
-                finalExport = String.Concat(Environment.NewLine, discID, "\t", efDigits, "\t", "98.5", "\t", theoThick, "\t", matNum, "\t", barcodeNutzdaten, "\t", WielandID, "\t", stringNum, "\t\t", batchID, "\t", Math.Round(shrinkage, 3), "\tH\t\t", batchID, "\t\t4418753237\t", barcode, "\t", encodedCode, "\t", shadeAlias, "\t"+shadeAlias2+"\t");
-            else 
-                finalExport = String.Concat(Environment.NewLine, discID, "\t", efDigits, "\t", heightAlias, "\t", theoThick, ".00\t", matNum, "\t", barcodeNutzdaten, "\t", batchID, "\t", stringNum, "\t\t", batchID, "\t", Math.Round(measDiam, 2), "\tH\t\t", batchID, "\t\t4418753237\t", barcode, "\t", encodedCode, "\t", shadeAlias, "\t\t");
+            if (material == "ZFC")
+                finalExport = String.Concat(Environment.NewLine, discID, "\t", efDigits, "\t", "98.5", "\t", theoThick, "\t", matNum, "\t", barcodeNutzdaten, "\t", WielandID, "\t", stringNum, "\t\t", batchID, "\t", Math.Round(shrinkage, 3), "\tH\t\t", batchID, "\t\t4418753237\t", barcode, "\t", encodedCode, "\t", shadeAlias, "\t" + shadeAlias2 + "\t");
+            else
+                finalExport = String.Concat(Environment.NewLine, discID, "\t", efDigits, "\t", heightAlias, "\t", theoThick, ".00\t", matNum, "\t", barcodeNutzdaten, "\t", batchID, "\t", stringNum, "\t\t", batchID, "\t", Math.Round(measDiam, 2), "\tH\t\t", batchID, "\t\t4418753237\t", barcode, "\t", encodedCode, "\t", shadeAlias, "\t", materialID, "\t", "0", "\t");
 
             File.AppendAllText(RFIDLocation + batchID + "_rfid_complete.csv", finalExport);
 
@@ -655,6 +671,7 @@ namespace LeToucan
             {
                 if (printToggle)
                 {
+                    string drukerOutput = "";
                     try
                     {
                         //put in command to start rfid label printer
@@ -665,47 +682,51 @@ namespace LeToucan
                             if (retain)
                             {
                                 theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Zirlux FC2 With Ring_Retain.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                drukerOutput = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Zirlux FC2 With Ring_Retain.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
                                 Console.WriteLine(thingOuttaSpec);
                                 Console.WriteLine("Retain Label is Now Being Printed");
                             }
                             else
                             {
                                 theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                                Console.WriteLine("C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe" + " /P \"G:\\Topex_Printer\\Zirlux Label Templates\\Zirlux FC2\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv \"  /start /hidden");
+                                drukerOutput = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
                                 Console.WriteLine("\n\nDisc is in spec\nLabel is printing");
                             }
                         }
 
-                        //new wieland ZMU, ZCLT,ZCMO
-                        else if (material == "ZMU" || material == "ZCLT" || material == "ZCMO")
+                        //new ivoclar ZCLT,ZCMO
+                        else if (material=="ZMU" || material == "ZCLT" || material == "ZCMO")
                         {
                             theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
                             if (retain)
                             {
                                 theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Ivoclar_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                drukerOutput = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Ivoclar_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
                                 Console.WriteLine(thingOuttaSpec);
                                 Console.WriteLine("Retain Label is Now Being Printed");
                             }
                             else
                             {
                                 theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Ivoclar_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                drukerOutput = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Ivoclar_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
                                 Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv \"  /start /hidden");
                                 Console.WriteLine("\n\nDisc is in spec\nLabel is printing");
                             }
                         }
-
                         else  //Old Wieland
                         {
                             theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
                             if (retain)
                             {
                                 theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Wieland_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                drukerOutput = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Wieland_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
                                 Console.WriteLine(thingOuttaSpec);
                                 Console.WriteLine("Retain Label is Now Being Printed");
                             }
                             else
                             {
                                 theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                drukerOutput = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
                                 Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv \"  /start /hidden");
                                 Console.WriteLine("\n\nDisc is in spec\nLabel is printing");
                             }
@@ -727,6 +748,13 @@ namespace LeToucan
                     catch
                     {
                         Console.WriteLine("Failed to find DruckerStation.exe");
+                        Console.WriteLine(drukerOutput);
+
+                        // Write the string to a file.
+                        System.IO.StreamWriter file = new System.IO.StreamWriter("G:\\Public\\test.txt");
+                        file.WriteLine(drukerOutput);file.Close();
+
+                        Console.ReadKey();
                         Environment.Exit(0);
                     }
                 }
@@ -749,7 +777,7 @@ namespace LeToucan
             return count;
         }
         
-        static bool SpecCheck(string material, int matNum, double measDiam, double measThick, double PSDensity, double innerDiam, double ledgeThick, double ledgeOffset, double concentricity, double EF, string materialID)
+        static bool SpecCheck(string material, string matNum, double measDiam, double measThick, double PSDensity, double innerDiam, double ledgeThick, double ledgeOffset, double concentricity, double EF, string materialID)
         {
             //checks to see if all the data for the disc is in spec
             //returns location of template file to use 
@@ -919,14 +947,13 @@ namespace LeToucan
  
             return isOutOfSpec;
         }
-        static void PrintBoxLabels(int discnum,string theoThick,int matNum,string batchID,string material,string materialID,int batchsize,string templateLocation,int numLabels, string shade, string fullMaterialID, string packagedMatNum)
+        static void PrintBoxLabels(int discnum,string theoThick,string matNum,string batchID,string material,string materialID,int batchsize,string templateLocation,int numLabels, string shade, string fullMaterialID, string packagedMatNum)
         {
             var cmdFile = new StringBuilder();
             var cmdFile2 = new StringBuilder();
 
             string datamaxLabelAutoPrinterFolderGuy = "G:\\Equipment\\GiS-Topex RFID Printer\\Datamax Template Files\\";
 
-            if (material == "ZMU") shade = "MT Multi " + shade;
             string shadeCopy = shade;
             if (Char.IsDigit(shade[1])) shade = shade.Insert(1, " ");
             else if (Char.IsDigit(shade[2])) shade = shade.Insert(2, " ");
@@ -987,6 +1014,7 @@ namespace LeToucan
                     csStart.WindowStyle = ProcessWindowStyle.Hidden;
                     csStart.FileName = @"C:\Program Files (x86)\Teklynx\CODESOFT 2014\CS.exe";
                     csStart.Arguments = " /CMD " + datamaxLabelAutoPrinterFolderGuy + "Label Output";
+                    
                     using (Process exeProcess = Process.Start(csStart))
                         exeProcess.WaitForExit(10000);
                     
