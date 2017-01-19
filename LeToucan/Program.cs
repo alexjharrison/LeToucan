@@ -655,7 +655,7 @@ namespace LeToucan
             if (material == "ZFC")
                 finalExport = String.Concat(Environment.NewLine, discID, "\t", efDigits, "\t", "98.5", "\t", theoThick, "\t", matNum, "\t", barcodeNutzdaten, "\t", WielandID, "\t", stringNum, "\t\t", batchID, "\t", Math.Round(shrinkage, 3), "\tH\t\t", batchID, "\t\t4418753237\t", barcode, "\t", encodedCode, "\t", shadeAlias, "\t" + shadeAlias2 + "\t");
             else
-                finalExport = String.Concat(Environment.NewLine, discID, "\t", efDigits, "\t", heightAlias, "\t", theoThick, ".00\t", matNum, "\t", barcodeNutzdaten, "\t", batchID, "\t", stringNum, "\t\t", batchID, "\t", Math.Round(measDiam, 2), "\tH\t\t", batchID, "\t\t4418753237\t", barcode, "\t", encodedCode, "\t", shadeAlias, "\t", materialID, "\t", "0", "\t");
+                finalExport = String.Concat(Environment.NewLine, discID, "\t", efDigits, "\t", heightAlias, "\t", theoThick, ".00\t", matNum, "\t", barcodeNutzdaten, "\t", batchID, "\t", stringNum, "\t\t", batchID, "\t", Math.Round(measDiam, 2), "\tH\t\t", batchID, "\t\t4418753237\t", barcode, "\t", encodedCode, "\t", shadeAlias, "\t\t", materialID, "\t", "0", "\t");
 
             File.AppendAllText(RFIDLocation + batchID + "_rfid_complete.csv", finalExport);
 
@@ -957,8 +957,11 @@ namespace LeToucan
             string shadeCopy = shade;
             if (Char.IsDigit(shade[1])) shade = shade.Insert(1, " ");
             else if (Char.IsDigit(shade[2])) shade = shade.Insert(2, " ");
-            if (shade == "Sun-Chroma") shade = "T sc";
-            if (shade == "Sun") shade = "T s";
+            if (material=="ZT" && shade == "Sun-Chroma") shade = "T sc";
+            if (material == "ZT" && shade == "Sun") shade = "T s";
+            if (material == "ZCLT" && shade == "Sun-Chroma") shade = "LT sc";
+            if (material == "ZCLT" && shade == "Sun") shade = "LT s";
+            if (shade.Contains("MT_Multi")) shade = shade.Replace("_", " ");
             
             
             if(material=="ZMO"||material=="ZT")
