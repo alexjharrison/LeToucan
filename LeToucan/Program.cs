@@ -720,8 +720,9 @@ namespace LeToucan
                         if (material == "ZFC") //Zirlux
                         {
                             //changes for microhite (x86)
-                            //theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
-                            theDruck.FileName = @"C:\Users\us9zir\Desktop\DruckerStation.exe";
+                            if (isGloblal) theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                            else theDruck.FileName = @"C:\Users\us9zir\Desktop\DruckerStation.exe";
+
                             if (retain)
                             {
                                 theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\" + microHite + "Zirlux FC2 With Ring_Retain.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
@@ -741,8 +742,9 @@ namespace LeToucan
                         else if (material=="ZMU" || material == "ZCLT" || material == "ZCMO")
                         {
                             //changes for microhite
-                            //theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
-                            theDruck.FileName = @"C:\Users\us9zir\Desktop\DruckerStation.exe";
+                            if(isGloblal) theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                            else theDruck.FileName = @"C:\Users\us9zir\Desktop\DruckerStation.exe";
+                            
                             if (retain)
                             {
                                 theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\" + microHite + "Ivoclar_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
@@ -761,8 +763,9 @@ namespace LeToucan
                         else  //Old Wieland
                         {
                             //changes for microhite
-                            //theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
-                            theDruck.FileName = @"C:\Users\us9zir\Desktop\DruckerStation.exe";
+                            if(isGloblal) theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                            else theDruck.FileName = @"C:\Users\us9zir\Desktop\DruckerStation.exe";
+
                             if (retain)
                             {
                                 theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\" + microHite + "Wieland_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
