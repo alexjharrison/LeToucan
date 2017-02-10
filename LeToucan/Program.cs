@@ -14,6 +14,8 @@ namespace LeToucan
         public static string thingOuttaSpec = "";
         public static string isConforming = "Conform";
         public static string whatsOuttaSpec = "";
+        public static bool isGloblal = false;
+        
         static void Main(string[] args)
         {
             //fail program if incorrect # of inputs from pcdmis found
@@ -85,11 +87,14 @@ namespace LeToucan
             }
 
 
+            if (CMMID == "TE-59") isGloblal = true; 
+            else isGloblal = false;
+
             //debugging
-            string things = "";
-            for (int i = 0; i < args.Length; i++) things = things + " " + args[i];
-            System.IO.StreamWriter file2 = new System.IO.StreamWriter("G:\\Public\\test.txt");
-            file2.WriteLine(things); file2.Close();
+            //string things = "";
+            //for (int i = 0; i < args.Length; i++) things = things + " " + args[i];
+            //System.IO.StreamWriter file2 = new System.IO.StreamWriter("G:\\Public\\test.txt");
+            //file2.WriteLine(things); file2.Close();
 
 
             //RFID file header
@@ -264,7 +269,9 @@ namespace LeToucan
                 //added code to reprint last labels
                 if ((discnum != batchsize) && (material != "ZTG") && (material != "ZG"))
                 {
-                    PrintBoxLabels(discnum, theoThick, matNum, batchID, material, materialID, batchsize, "G:\\Prod_Labels\\Zirconia\\Box Labels\\", 1, shade, fullMaterialID, packagedMatNum);
+                    //changes for microhite
+                    if (isGloblal) PrintBoxLabels(discnum, theoThick, matNum, batchID, material, materialID, batchsize, "G:\\Prod_Labels\\Zirconia\\Box Labels\\", 1, shade, fullMaterialID, packagedMatNum);
+                    else PrintBoxLabels(discnum, theoThick, matNum, batchID, material, materialID, batchsize, "G:\\Prod_Labels\\Zirconia\\Box Labels\\Microhite\\", 1, shade, fullMaterialID, packagedMatNum);
 
                     bool retain2;
                     PSDensity = CalcDensity(measDiam, measThick, weight, material, innerDiam, ledgeThick);
@@ -272,29 +279,56 @@ namespace LeToucan
                     shrinkage = CalcShrink(EF);
                     retain2 = SpecCheck(material, matNum, measDiam, measThick, PSDensity, innerDiam, ledgeThick, ledgeOffset, concentricity, EF, materialID);
                     ProcessStartInfo theDruck = new ProcessStartInfo();
-                    theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                    //change for microhite
+                    if(isGloblal) theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                    else theDruck.FileName = @"C:\Users\us9zir\Desktop\DruckerStation.exe";
                     theDruck.CreateNoWindow = true;
                     theDruck.UseShellExecute = false;
                     theDruck.WindowStyle = ProcessWindowStyle.Hidden;
-                    //zirlux retain
-                    if ((material == "ZFC") && retain2)
-                        theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Zirlux FC2 With Ring_Retain.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                    //zirlux non-retain
-                    else if ((material == "ZFC") && !retain2)
-                        theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                    //new Ivoclar retain (ZMU,ZCMO,ZCLT)
-                    else if ((material == "ZMU"||material == "ZCMO" || material == "ZCLT") && !retain2)
-                        theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Ivoclar_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                    //new Ivcolar non-retain (ZMU,ZCMO,ZCLT)
-                    else if ((material == "ZMU" || material == "ZCMO" || material == "ZCLT") && retain2)
-                        theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Ivoclar_CE0123_retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                    //old wieland retain (ZMO,ZT,ZTR)
-                    else if (retain2)
-                        theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Wieland_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                    //old wieland non-retain(ZMO,ZT,ZTR)
-                    else if (!retain2)
-                        theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
 
+                    //CHanges for Microhite
+                    if (isGloblal)  //for global
+                    {
+                        //zirlux retain
+                        if ((material == "ZFC") && retain2)
+                            theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Zirlux FC2 With Ring_Retain.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                        //zirlux non-retain
+                        else if ((material == "ZFC") && !retain2)
+                            theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                        //new Ivoclar retain (ZMU,ZCMO,ZCLT)
+                        else if ((material == "ZMU" || material == "ZCMO" || material == "ZCLT") && !retain2)
+                            theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Ivoclar_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                        //new Ivcolar non-retain (ZMU,ZCMO,ZCLT)
+                        else if ((material == "ZMU" || material == "ZCMO" || material == "ZCLT") && retain2)
+                            theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Ivoclar_CE0123_retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                        //old wieland retain (ZMO,ZT,ZTR)
+                        else if (retain2)
+                            theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Wieland_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                        //old wieland non-retain(ZMO,ZT,ZTR)
+                        else if (!retain2)
+                            theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                    }
+                    else  //for microhite
+                    {
+                        //zirlux retain
+                        if ((material == "ZFC") && retain2)
+                            theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Microhite\\Zirlux FC2 With Ring_Retain.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                        //zirlux non-retain
+                        else if ((material == "ZFC") && !retain2)
+                            theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Microhite\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                        //new Ivoclar retain (ZMU,ZCMO,ZCLT)
+                        else if ((material == "ZMU" || material == "ZCMO" || material == "ZCLT") && !retain2)
+                            theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Microhite\\Ivoclar_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                        //new Ivcolar non-retain (ZMU,ZCMO,ZCLT)
+                        else if ((material == "ZMU" || material == "ZCMO" || material == "ZCLT") && retain2)
+                            theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Microhite\\Ivoclar_CE0123_retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                        //old wieland retain (ZMO,ZT,ZTR)
+                        else if (retain2)
+                            theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Microhite\\Wieland_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                        //old wieland non-retain(ZMO,ZT,ZTR)
+                        else if (!retain2)
+                            theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Microhite\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                    }
                     
                     using (Process exeProcess = Process.Start(theDruck))
                     {
@@ -453,7 +487,10 @@ namespace LeToucan
                 string finalExport = GenerateRFIDOutput(discnum,batchID,theoThick,matNum,material,theoDiam,EF,simultaneousPrints,batchsize,RFIDLocation,shade,shadeAlias,measDiam,rfidheader,shrinkage,retain,printToggle,materialID);
             }
 
-            string labelTemplate = "G:\\Prod_Labels\\Zirconia\\Box Labels\\";
+            //changes for microhite
+            string labelTemplate;
+            if (isGloblal) labelTemplate = "G:\\Prod_Labels\\Zirconia\\Box Labels\\";
+            else labelTemplate = "G:\\Prod_Labels\\Zirconia\\Box Labels\\Microhite\\";
             
             if(printToggle)
             {
@@ -653,7 +690,7 @@ namespace LeToucan
             
             //export rfid to ..._complete.csv 
             if (material == "ZFC")
-                finalExport = String.Concat(Environment.NewLine, discID, "\t", efDigits, "\t", "98.5", "\t", theoThick, "\t", matNum, "\t", barcodeNutzdaten, "\t", WielandID, "\t", stringNum, "\t\t", batchID, "\t", Math.Round(shrinkage, 3), "\tH\t\t", batchID, "\t\t4418753237\t", barcode, "\t", encodedCode, "\t", shadeAlias, "\t" + shadeAlias2 + "\t");
+                finalExport = String.Concat(Environment.NewLine, discID, "\t", efDigits, "\t", "98.5", "\t", theoThick, "\t", matNum, "\t", barcodeNutzdaten, "\t", WielandID, "\t", stringNum, "\t\t", batchID, "\t", Math.Round(shrinkage, 3), "\tH\t\t", batchID, "\t\t4418753237\t", barcode, "\t", encodedCode, "\t", shadeAlias, "\t" + shadeAlias2 + "\t\t\t" );
             else
                 finalExport = String.Concat(Environment.NewLine, discID, "\t", efDigits, "\t", heightAlias, "\t", theoThick, ".00\t", matNum, "\t", barcodeNutzdaten, "\t", batchID, "\t", stringNum, "\t\t", batchID, "\t", Math.Round(measDiam, 2), "\tH\t\t", batchID, "\t\t4418753237\t", barcode, "\t", encodedCode, "\t", shadeAlias, "\t\t", materialID, "\t", "0", "\t");
 
@@ -671,25 +708,31 @@ namespace LeToucan
             {
                 if (printToggle)
                 {
+                    //changes for microhite
                     string drukerOutput = "";
+                    string microHite;
+                    if (isGloblal) microHite = "";
+                    else microHite = "Microhite\\";
+
                     try
                     {
                         //put in command to start rfid label printer
                         if (material == "ZFC") //Zirlux
                         {
-
-                            theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                            //changes for microhite (x86)
+                            //theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                            theDruck.FileName = @"C:\Users\us9zir\Desktop\DruckerStation.exe";
                             if (retain)
                             {
-                                theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Zirlux FC2 With Ring_Retain.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                                drukerOutput = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Zirlux FC2 With Ring_Retain.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\" + microHite + "Zirlux FC2 With Ring_Retain.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                drukerOutput = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\" + microHite + "Zirlux FC2 With Ring_Retain.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
                                 Console.WriteLine(thingOuttaSpec);
                                 Console.WriteLine("Retain Label is Now Being Printed");
                             }
                             else
                             {
-                                theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                                drukerOutput = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\" + microHite + "Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                drukerOutput = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\" + microHite + "Zirlux FC2 With Ring.txt\" /RFID Off  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
                                 Console.WriteLine("\n\nDisc is in spec\nLabel is printing");
                             }
                         }
@@ -697,36 +740,40 @@ namespace LeToucan
                         //new ivoclar ZCLT,ZCMO
                         else if (material=="ZMU" || material == "ZCLT" || material == "ZCMO")
                         {
-                            theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                            //changes for microhite
+                            //theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                            theDruck.FileName = @"C:\Users\us9zir\Desktop\DruckerStation.exe";
                             if (retain)
                             {
-                                theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Ivoclar_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                                drukerOutput = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Ivoclar_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\" + microHite + "Ivoclar_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                drukerOutput = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\" + microHite + "Ivoclar_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
                                 Console.WriteLine(thingOuttaSpec);
                                 Console.WriteLine("Retain Label is Now Being Printed");
                             }
                             else
                             {
-                                theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Ivoclar_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                                drukerOutput = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Ivoclar_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\" + microHite + "Ivoclar_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                drukerOutput = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\" + microHite + "Ivoclar_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
                                 Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv \"  /start /hidden");
                                 Console.WriteLine("\n\nDisc is in spec\nLabel is printing");
                             }
                         }
                         else  //Old Wieland
                         {
-                            theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                            //changes for microhite
+                            //theDruck.FileName = @"C:\Program Files (x86)\Wieland RFID PrinterStation\DruckerStation.exe";
+                            theDruck.FileName = @"C:\Users\us9zir\Desktop\DruckerStation.exe";
                             if (retain)
                             {
-                                theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Wieland_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                                drukerOutput = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Wieland_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\" + microHite + "Wieland_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                drukerOutput = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\" + microHite + "Wieland_CE0123_Retain.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
                                 Console.WriteLine(thingOuttaSpec);
                                 Console.WriteLine("Retain Label is Now Being Printed");
                             }
                             else
                             {
-                                theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
-                                drukerOutput = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                theDruck.Arguments = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\" + microHite + "Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
+                                drukerOutput = " /P \"G:\\Prod_Labels\\Zirconia\\RFID Labels\\" + microHite + "Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv\"  /start /hidden";
                                 Console.WriteLine("\"C:\\Program Files (x86)\\Wieland RFID PrinterStation\\DruckerStation.exe\" /P \"G:\\Topex_Printer\\Wieland_CE0123.txt\" /RFID On  /B \"" + RFIDLocation + batchID + "_rfid_" + discnum + ".csv \"  /start /hidden");
                                 Console.WriteLine("\n\nDisc is in spec\nLabel is printing");
                             }
@@ -783,7 +830,11 @@ namespace LeToucan
             //returns location of template file to use 
             //out of spec returns retain template in spec returns normal label
             bool isOutOfSpec = false;
-            string specListLocation = "G:/LabX_Export/LabsQ_LabX_Integration/Spec_List.csv";
+            //Changes for Microhite
+            string specListLocation;
+            if (isGloblal) specListLocation = "G:/LabX_Export/LabsQ_LabX_Integration/Spec_List.csv";
+            specListLocation = "G:/LabX_Export/LabsQ_LabX_Integration/Spec_List_2.csv";
+            
             var column1 = new List<string>();
             var column2 = new List<string>();
             var column3 = new List<string>();
@@ -952,7 +1003,10 @@ namespace LeToucan
             var cmdFile = new StringBuilder();
             var cmdFile2 = new StringBuilder();
 
-            string datamaxLabelAutoPrinterFolderGuy = "G:\\Equipment\\GiS-Topex RFID Printer\\Datamax Template Files\\";
+            //changes for microhite
+            string datamaxLabelAutoPrinterFolderGuy;
+            if(isGloblal) datamaxLabelAutoPrinterFolderGuy = "G:\\Equipment\\GiS-Topex RFID Printer\\Datamax Template Files\\";
+            else datamaxLabelAutoPrinterFolderGuy = "G:\\Equipment\\GiS-Topex RFID Printer\\Datamax Template Files\\Microhite Label Output\\";
 
             string shadeCopy = shade;
             if (Char.IsDigit(shade[1])) shade = shade.Insert(1, " ");
@@ -977,12 +1031,14 @@ namespace LeToucan
             else 
                 cmdFile.AppendLine("LABELNAME = \"" + templateLocation + "Zirlux Box Label Template.lab\"");
 
-            cmdFile.AppendLine("PRINTER= \"Copy of Datamax-O'Neil I-4606e Mark II,USB004\"");
+            //changes for microhite
+            if (isGloblal) cmdFile.AppendLine("PRINTER= \"Copy of Datamax-O'Neil I-4606e Mark II,USB004\"");
+            else cmdFile.AppendLine("PRINTER= \"Datamax-O'Neil I-4606e Mark II, USB001\"");
+
             cmdFile.AppendLine("Thickness = \"" + theoThick + "\"");
             cmdFile.AppendLine("Material Number = \"" + packagedMatNum + "\"");
             cmdFile.AppendLine("Lot Number = \"" + batchID + "\"");
-
-            if (material != "ZFC") 
+            ; ; if (material != "ZFC") 
                 cmdFile.AppendLine("Material Description = \"" + shade + "\"");
             else
                 cmdFile.AppendLine("Material Description = \"" + fullMaterialID.Replace('_', ' ') + "\"");
@@ -994,7 +1050,11 @@ namespace LeToucan
             if (material == "ZT" || material == "ZMO") 
             {
                 cmdFile2.AppendLine("LABELNAME = \"" + templateLocation + "Zenostar Barcode Label Template.lab\"");
-                cmdFile2.AppendLine("PRINTER = \"Datamax-O'Neil I-4606e Mark II,USB003\"");
+                
+                //changes for microhite
+                if (isGloblal) cmdFile2.AppendLine("PRINTER = \"Datamax-O'Neil I-4606e Mark II,USB003\"");
+                else cmdFile2.AppendLine("PRINTER = \"Datamax-O'Neil I-4606e Mark II, USB001\"");
+
                 cmdFile2.AppendLine("Material Number = \"" + packagedMatNum + "\"");
                 cmdFile2.AppendLine("Lot Number = \"" + batchID + "\"");
                 cmdFile2.AppendLine("Piece Count = \"1 pc.\"");
@@ -1015,7 +1075,11 @@ namespace LeToucan
                     csStart.CreateNoWindow = true;
                     csStart.UseShellExecute = false;
                     csStart.WindowStyle = ProcessWindowStyle.Hidden;
-                    csStart.FileName = @"C:\Program Files (x86)\Teklynx\CODESOFT 2014\CS.exe";
+                    
+                    //change for microhite
+                    if (isGloblal) csStart.FileName = @"C:\Program Files (x86)\Teklynx\CODESOFT 2014\CS.exe";
+                    else csStart.FileName = @"C:\Program Files\Teklynx\CODESOFT 2015\CS.exe";
+                    
                     csStart.Arguments = " /CMD " + datamaxLabelAutoPrinterFolderGuy + "Label Output";
                     
                     using (Process exeProcess = Process.Start(csStart))
